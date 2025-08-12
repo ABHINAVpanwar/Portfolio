@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About</title>
+    <link rel="icon" href="../IMG/icon.png" />
+    <!-- Font Awesome Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../STYLE/about.css" />
+    <style>
+      .chai-container {
+        max-width: 450px;
+        width: 90%;
+        margin: 2rem auto;
+        padding: clamp(1rem, 3vw, 1.5rem);
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+        cursor: default;
+      }
+
+      .chai-container:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+      }
+
+      .chai-title {
+        color: #4caf50;
+        text-align: center;
+        margin-bottom: clamp(0.5rem, 2vw, 1rem);
+        font-size: clamp(1.5rem, 5vw, 1.8rem);
+        animation: pulse 2s infinite;
+      }
+
+      .chai-text {
+        color: #222;
+        text-align: center;
+        margin-bottom: clamp(1rem, 3vw, 1.5rem);
+        line-height: 1.6;
+        font-size: clamp(0.95rem, 3vw, 1.05rem);
+      }
+
+      .chai-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin: 0 auto;
+        padding: clamp(0.75rem, 2vw, 0.9rem) clamp(1.25rem, 4vw, 1.5rem);
+        background: linear-gradient(135deg, #4caf50, #388e3c);
+        color: #ffffff;
+        border: none;
+        border-radius: 50px;
+        font-size: clamp(0.9rem, 3.5vw, 1rem);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        overflow: hidden;
+        position: relative;
+        min-width: 140px;
+      }
+
+      .chai-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+      }
+
+      .chai-button:active {
+        transform: translateY(0);
+      }
+
+      .chai-button .button-icon {
+        transition: transform 0.3s ease;
+        font-size: clamp(1rem, 4vw, 1.2rem);
+      }
+
+      .chai-button:hover .button-icon {
+        transform: scale(1.2) rotate(10deg);
+      }
+
+      .chai-footer {
+        margin-top: clamp(1rem, 3vw, 1.5rem);
+        text-align: center;
+      }
+
+      .policy-link {
+        color: #555;
+        font-size: clamp(0.7rem, 2.5vw, 0.8rem);
+        text-decoration: none;
+        transition: color 0.2s ease;
+      }
+
+      .policy-link:hover {
+        color: #4caf50;
+        text-decoration: underline;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .chai-button::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.8) 1%,
+            transparent 1%
+          )
+          center/15000% no-repeat;
+        opacity: 0;
+        transition: opacity 0.5s, background-size 0.5s;
+      }
+
+      .chai-button:active::after {
+        background-size: 100%;
+        opacity: 0.2;
+        transition: 0s;
+      }
+
+      @media (max-width: 500px) {
+        .chai-container {
+          width: 95%;
+          padding: 1rem;
+        }
+
+        .chai-button {
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 320px) {
+        .chai-title {
+          font-size: 1.3rem;
+        }
+
+        .chai-text {
+          font-size: 0.85rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a id="logo">@panwar</a>
+        <i class="fas fa-bars" id="ham-menu"></i>
+        <ul id="nav-bar">
+          <li>
+            <a href="../index.html">Home</a>
+          </li>
+          <li>
+            <a href="about.html" id="blink">About</a>
+          </li>
+          <li>
+            <a href="skills.html">Skills</a>
+          </li>
+          <li>
+            <a href="projects.html">Projects</a>
+          </li>
+        </ul>
+      </nav>
+    </header>
+    <section id="S1">
+      <div id="midsec">
+        <div id="profile"></div>
+        <div id="arc"></div>
+      </div>
+      <div id="handles">
+        <a
+          class="fa-regular fa-file fa-2xl"
+          href="../DOC/Resume.pdf"
+          target="_blank"
+        ></a>
+        <a
+          class="fa-brands fa-linkedin fa-2xl"
+          href="https://www.linkedin.com/in/4bhinavpanwar/"
+          target="_blank"
+        ></a>
+        <a
+          class="fa-brands fa-github fa-2xl"
+          href="https://github.com/ABHINAVpanwar"
+          target="_blank"
+        ></a>
+        <a
+          class="fa-brands fa-instagram fa-2xl"
+          href="https://www.instagram.com/4bhinavpanwar/"
+          target="_blank"
+        ></a>
+      </div>
+    </section>
+    <div id="FH">
+      <h2 id="heading">Who Am I</h2>
+      <p>
+        I'm a passionate web developer, mathematics enthusiast, and calisthenics
+        aficionado.
+      </p>
+      <p>
+        I thrive on the challenges of coding and problem-solving, always pushing
+        myself to build efficient and creative applications while writing
+        elegant code. My interests lie in web performance optimization and
+        refactoring, where I constantly seek to improve my skills and stay
+        up-to-date with the latest techniques.
+      </p>
+      <p>
+        Outside of the digital world, I'm a kid at heart who enjoys designing
+        experiences, whether through web development, mathematical puzzles, or
+        staying active with calisthenics routines.
+      </p>
+    </div>
+    <div id="SH">
+      <div class="skill-bar">
+        <div class="skill-name">Focus</div>
+        <div class="bar-container">
+          <div class="bar" id="F"></div>
+        </div>
+        <div class="skill-name">Stress Management</div>
+        <div class="bar-container">
+          <div class="bar" id="SM"></div>
+        </div>
+        <div class="skill-name">Time Management</div>
+        <div class="bar-container">
+          <div class="bar" id="TM"></div>
+        </div>
+        <div class="skill-name">Problem Solving</div>
+        <div class="bar-container">
+          <div class="bar" id="PS"></div>
+        </div>
+        <div class="skill-name">Decision Making</div>
+        <div class="bar-container">
+          <div class="bar" id="DM"></div>
+        </div>
+        <div class="skill-name">Confidence</div>
+        <div class="bar-container">
+          <div class="bar" id="C"></div>
+        </div>
+      </div>
+    </div>
+    <div id="B1">
+      <button id="experience" class="btn" onclick="f1()">My Experiences</button>
+      <button id="education" class="btn" onclick="f2()">My Education</button>
+      <button id="interest" class="btn" onclick="f3()">My Interests</button>
+    </div>
+    <div id="B2">
+      <div id="exp">
+        <div id="timeline">
+          <div class="timeline-item">
+            <div class="timeline-date">2025-PRESENT</div>
+            <div class="timeline-description">
+              <p>TCS (ASSISTANT SYSTEM ENGINEER)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="edu">
+        <div id="timeline">
+          <div class="timeline-item">
+            <div class="timeline-date">2019</div>
+            <div class="timeline-description">
+              <p>X TH FROM LPS [CBSE]</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-date">2021</div>
+            <div class="timeline-description">
+              <p>XII TH FROM LPS (PCM) [CBSE]</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-date">2021-2025</div>
+            <div class="timeline-description">
+              <p>B.TECH FROM SRM KTR (ECE CORE)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="int">
+        <div class="mySlides fade">
+          <img src="../IMG/development.jpg" class="x" />
+        </div>
+        <div class="mySlides fade">
+          <img src="../IMG/calisthenics.jpg" class="x" />
+        </div>
+        <div class="mySlides fade">
+          <img src="../IMG/tennis.jpeg" class="x" />
+        </div>
+        <a class="prev" onclick="plusSlides(-1)">❮</a>
+        <a class="next" onclick="plusSlides(1)">❯</a>
+      </div>
+    </div>
+    <!-- Buy Me a Chai Section -->
+    <div id="chai-section" class="chai-container">
+      <div class="chai-content">
+        <h2 class="chai-title">☕ Buy Me a Chai</h2>
+        <p class="chai-text">
+          This is just a demo to learn payment gateways!<br />
+          I DON'T WANT YOUR $
+        </p>
+        <button id="buy-btn" class="chai-button">
+          <span class="button-text">Buy for ₹69</span>
+          <span class="button-icon">☕</span>
+        </button>
+        <div class="chai-footer">
+          <a href="policies.html" class="policy-link">Policies</a>
+        </div>
+      </div>
+    </div>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+      document.getElementById("buy-btn").onclick = function (e) {
+        // Ripple effect
+        const button = e.currentTarget;
+        button.classList.add("active");
+        setTimeout(() => button.classList.remove("active"), 500);
+
+        // Payment options
+        const options = {
+          key: "rzp_test_3QkacA8fwh5YbF",
+          amount: 6900,
+          currency: "INR",
+          name: "Abhinav Panwar",
+          description: "Support Me with Chai ☕",
+          image: "",
+          handler: function (response) {
+            const confettiSettings = {
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 },
+            };
+
+            // Simple confetti effect
+            const confettiElements = [];
+            for (let i = 0; i < confettiSettings.particleCount; i++) {
+              const confetti = document.createElement("div");
+              confetti.className = "confetti";
+              confetti.style.left = Math.random() * 100 + "vw";
+              confetti.style.backgroundColor = `hsl(${
+                Math.random() * 60 + 20
+              }, 100%, 50%)`;
+              confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+              confetti.style.animation = `fall ${
+                Math.random() * 3 + 2
+              }s linear forwards`;
+              document.body.appendChild(confetti);
+              confettiElements.push(confetti);
+            }
+
+            setTimeout(() => {
+              confettiElements.forEach((el) => el.remove());
+            }, 3000);
+
+            alert(
+              "🎉 Thanks for the chai! Payment ID:\n" +
+                response.razorpay_payment_id
+            );
+          },
+          theme: {
+            color: "#4caf50",
+          },
+        };
+        const rzp = new Razorpay(options);
+        rzp.open();
+      };
+
+      // Add confetti style
+      const style = document.createElement("style");
+      style.textContent = `
+    .confetti {
+      position: fixed;
+      top: -10px;
+      width: 10px;
+      height: 10px;
+      opacity: 1;
+      z-index: 9999;
+    }
+    @keyframes fall {
+      to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+  `;
+      document.head.appendChild(style);
+    </script>
+    <script src="../SCRIPT/about.js"></script>
+    <script src="../SCRIPT/users.js"></script>
+  </body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policies</title>
+    <link rel="icon" href="../IMG/icon.png" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            background-color: #4caf50;
+            color: #333;
+            line-height: 1.6;
+            cursor: default;
+        }
+        
+        .policy-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            min-height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        h1 {
+            text-align: center;
+            padding-bottom: 15px;
+            font-size: clamp(28px, 4vw, 42px);
+            margin-bottom: 40px;
+            color: #4caf50;
+            position: relative;
+        }
+        
+        h1::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 25%;
+            width: 50%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, black, transparent);
+        }
+        
+        .policy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            flex: 1;
+        }
+        
+        .policy-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #fefefe;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .policy-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .policy-section h3 {
+            padding-bottom: 10px;
+            font-size: clamp(20px, 2.5vw, 24px);
+            margin-bottom: 15px;
+            color: #222;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .policy-section p {
+            margin-top: 12px;
+            font-size: clamp(15px, 1.8vw, 17px);
+            color: #555;
+        }
+        
+        .policy-section ul {
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+        
+        .policy-section li {
+            margin-bottom: 8px;
+            color: #555;
+            position: relative;
+            list-style-type: none;
+        }
+        
+        .policy-section li::before {
+            content: "•";
+            color: #ff6f00;
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+        
+        strong {
+            color: #333;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: auto;
+            padding-top: 40px;
+            font-size: 14px;
+            color: #888;
+        }
+        
+        @media (max-width: 768px) {
+            .policy-container {
+                padding: 25px;
+            }
+            
+            .policy-grid {
+                gap: 20px;
+            }
+            
+            .policy-section {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+            
+            .policy-container {
+                padding: 20px;
+            }
+            
+            h1::after {
+                left: 15%;
+                width: 70%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="policy-container">
+        <h1>🤪 Totally Legit (Not Really) Policies</h1>
+
+        <div class="policy-grid">
+            <!-- Left Column -->
+            <div>
+                <div class="policy-section">
+                    <h3>📞 How to Yell at Us</h3>
+                    <p>
+                        <strong>Email:</strong> abhinavpanwar199@gmail.com<br>
+                        <em>(We check emails between Netflix episodes)</em><br><br>
+                        <strong>Phone:</strong> +91-8130630079<br>
+                        <em>(Text preferred - we're millennials)</em><br><br>
+                        <strong>Location:</strong> New Delhi, India<br>
+                        <em>(My mom's basement... just kidding! Or am I?)</em>
+                    </p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>🚢 Shipping Policy</h3>
+                    <p>
+                        We don't ship anything because we're not actually selling anything.<br><br>
+                        If you expected a package, you might be on the wrong website.<br><br>
+                        <strong>Pro Tip:</strong> Try Amazon - they're great at shipping actual things!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div>
+                <div class="policy-section">
+                    <h3>📜 Terms & Conditions</h3>
+                    <p>
+                        By clicking "Accept," you agree that:
+                        <ul>
+                            <li>This is just for Razorpay verification</li>
+                            <li>You're not actually buying anything</li>
+                            <li>We can high-five virtually if you want</li>
+                            <li>These terms were written while eating pizza</li>
+                            <li>We take exactly 0% of this seriously</li>
+                        </ul>
+                    </p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>❌ Cancellation Policy</h3>
+                    <p>
+                        Since you're not really buying anything, cancelling is easy:<br><br>
+                        1. Close this tab<br>
+                        2. Poof! Transaction vanished<br>
+                        3. Like my motivation on Mondays<br><br>
+                        <em>Refunds issued in the form of good vibes only.</em>
+                    </p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>🕵️ Privacy Policy</h3>
+                    <p>
+                        We promise not to:
+                        <ul>
+                            <li>Sell your data (We don't even know how)</li>
+                            <li>Spam you (Unless you want cat memes)</li>
+                            <li>Judge your browsing history (No promises)</li>
+                            <li>Remember your birthday (We forget our own)</li>
+                        </ul>
+                        <br>
+                        <strong>Actual Policy:</strong> We only collect what Razorpay needs and nothing more. Pinky promise!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Last updated: June 20, 2025 • Made with ❤️ and zero legal expertise
+        </div>
+    </div>
+</body>
+</html>

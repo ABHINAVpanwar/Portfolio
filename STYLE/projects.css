@@ -1,0 +1,1060 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  background-color: black;
+}
+
+#container {
+  height: 100vh;
+  width: 69vw;
+  background-color: black;
+}
+
+#nav {
+  background-color: #a5e245;
+  height: 60px;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+}
+
+#h1 {
+  margin-left: 20px;
+  font-family: "Poppins", sans-serif;
+  cursor: default;
+}
+
+.save-info {
+  color: white;
+  border-bottom: 6px dashed var(--background-green);
+  margin-bottom: 1rem;
+  height: 30vh;
+  width: 69vw;
+}
+
+@keyframes save-info-background-animation {
+  0% {
+    background-position: initial;
+  }
+
+  100% {
+    background-position: 100px 0px;
+  }
+}
+
+.save-info-background {
+  overflow: auto;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--focus-start),
+    var(--focus-start) 5%,
+    var(--focus-end) 5%,
+    var(--focus-end) 10%
+  );
+  background-size: 100px 100px;
+  animation: save-info-background-animation 2.5s linear infinite;
+  height: 100%;
+  padding: 0em 1em 0em 1em;
+}
+
+@keyframes focus-animation {
+  0% {
+    background-color: var(--focus-start);
+  }
+
+  25% {
+    background-color: var(--focus-start);
+  }
+
+  75% {
+    background-color: var(--focus-end);
+  }
+
+  100% {
+    background-color: var(--focus-end);
+  }
+}
+
+.h5a {
+  font-family: "Poppins", sans-serif;
+  color: white;
+  margin-top: 20px;
+  margin-left: 20px;
+  font-size: 24px;
+  cursor: default;
+}
+
+#h1b {
+  font-family: "Poppins", sans-serif;
+  color: #a5e245;
+  margin-left: 20px;
+  margin-top: 20px;
+  cursor: default;
+}
+
+#sites {
+  height: 600px;
+  display: flex;
+  flex-direction: column;
+  color: #a5e245;
+  font-size: 24px;
+  margin-left: 20px;
+  margin-top: 20px;
+  font-family: "Poppins", sans-serif;
+  overflow: hidden;
+}
+
+.a {
+  margin-bottom: 10px;
+  cursor: pointer;
+  color: #a5e245;
+  text-decoration: none;
+}
+
+.highlighted {
+  background-color: #a5e245;
+  animation: blink 1s infinite alternate;
+  color: white;
+}
+
+@keyframes blink {
+  0% {
+    background-color: #344817;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+#footer {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  position: relative;
+  bottom: 0px;
+  background-color: black;
+  height: 80px;
+  width: 69vw;
+}
+
+#dashed-line-two {
+  width: 100%;
+  height: 7px;
+  border-top: 7px dashed #a5e245;
+  margin-bottom: 20px;
+}
+
+.f2 {
+  color: bisque;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 69vw;
+}
+
+#footimg1 {
+  width: 120px;
+  height: 40px;
+  margin-right: 7px;
+}
+
+#footimg2 {
+  width: 120px;
+  height: 40px;
+  margin-left: 7px;
+}
+
+.text-container {
+  position: absolute;
+  right: 10px;
+  width: 200px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1000px; /* Adding perspective for 3D effect */
+}
+
+#one {
+  color: #a5e245;
+}
+
+#two {
+  color: white;
+}
+
+.text {
+  cursor: default;
+  font-family: "Poppins", sans-serif;
+  font-size: 20px;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backface-visibility: hidden; /* Hide the back side during flip */
+  transform: rotateX(0deg); /* Rotate vertically */
+  transition: transform 1s ease-in-out;
+}
+
+.text:nth-child(even) {
+  background-color: black;
+}
+
+.text:nth-child(odd) {
+  background-color: black;
+}
+
+.text.flip {
+  transform: rotateX(180deg); /* Rotate vertically to reveal the other side */
+}
+
+/* section2 */
+
+#h2proj {
+  margin-top: 20px;
+  color: white;
+  cursor: default;
+  font-family: "Poppins", sans-serif;
+  text-align: center;
+  animation: smoothBlink 4s infinite;
+}
+
+@keyframes smoothBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.mySlides {
+  height: 400px;
+  cursor: pointer;
+}
+
+.w3-content {
+  margin-bottom: 30px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.w3-button {
+  cursor: pointer;
+  font-size: 36px;
+  border: transparent;
+  background-color: transparent;
+  color: #a5e245;
+}
+
+:root {
+  --background-green: rgb(165, 226, 69);
+  --focus-start: rgba(63, 87, 27, 1);
+  --focus-end: rgba(63, 87, 27, 0.5);
+
+  --corner-thickness: 0.2rem;
+  --corner-color: #0000 25%, white 0;
+
+  --disabled-thickness: 0.25rem;
+  --disabled-color: #0000 90deg, red 0;
+}
+
+#footer2 {
+  display: flex;
+  align-items: center;
+  gap: 5vw;
+  flex-direction: row;
+  position: relative;
+  bottom: 0px;
+  background-color: black;
+  height: 80px;
+  width: 69vw;
+}
+
+.button-icon {
+  background-color: transparent;
+  border: 0px;
+  border-radius: 0%;
+  padding: 0.25rem;
+  height: fit-content;
+  position: relative;
+  box-shadow: none;
+}
+
+/*https://css-tip.com/corner-only-border/*/
+
+@keyframes corner-animation {
+  0% {
+    background: conic-gradient(
+          from 90deg at top var(--corner-thickness) left var(--corner-thickness),
+          var(--corner-color)
+        )
+        5% 5%,
+      conic-gradient(
+          from 180deg at top var(--corner-thickness) right
+            var(--corner-thickness),
+          var(--corner-color)
+        )
+        95% 5%,
+      conic-gradient(
+          from 0deg at bottom var(--corner-thickness) left
+            var(--corner-thickness),
+          var(--corner-color)
+        )
+        5% 95%,
+      conic-gradient(
+          from -90deg at bottom var(--corner-thickness) right var(--corner-thickness),
+          var(--corner-color)
+        )
+        95% 95%;
+    background-size: 20% 20%;
+    background-repeat: no-repeat;
+  }
+
+  100% {
+    background: conic-gradient(
+          from 90deg at top var(--corner-thickness) left var(--corner-thickness),
+          var(--corner-color)
+        )
+        0 0,
+      conic-gradient(
+          from 180deg at top var(--corner-thickness) right
+            var(--corner-thickness),
+          var(--corner-color)
+        )
+        100% 0,
+      conic-gradient(
+          from 0deg at bottom var(--corner-thickness) left
+            var(--corner-thickness),
+          var(--corner-color)
+        )
+        0 100%,
+      conic-gradient(
+          from -90deg at bottom var(--corner-thickness) right var(--corner-thickness),
+          var(--corner-color)
+        )
+        100% 100%;
+    background-size: 20% 20%;
+    background-repeat: no-repeat;
+  }
+}
+
+.disabled-button::after {
+  left: 0;
+  top: 0;
+  content: "";
+  transform: rotate(45deg);
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1;
+  background: conic-gradient(
+      from 90deg at var(--disabled-thickness) var(--disabled-thickness),
+      var(--disabled-color)
+    )
+    calc(100% + var(--disabled-thickness) / 2)
+    calc(100% + var(--disabled-thickness) / 2) /
+    calc(50% + var(--disabled-thickness)) calc(50% + var(--disabled-thickness));
+}
+
+.button-icon::before {
+  content: "";
+  height: 120%;
+  width: 120%;
+  display: block;
+  top: -10%;
+  left: -10%;
+  position: absolute;
+}
+
+.button-icon:hover::before,
+.button-icon:focus::before {
+  cursor: pointer;
+  animation: corner-animation 0.5s linear 0s infinite alternate-reverse none;
+}
+
+.icon {
+  height: 50px;
+  width: 50px;
+}
+
+/* Save Data Container Styles */
+.save-data {
+  display: none; /* Initially hidden */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 90%;
+  max-height: 70vh;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.9);
+  border: 2px solid #444;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  color: #fff;
+  font-family: "Courier New", monospace;
+}
+
+/* Close button styles */
+.save-data .close-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-data .close-btn:hover {
+  transform: scale(1.1);
+}
+
+.save-data .close-btn::before,
+.save-data .close-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 2px;
+  background-color: #fff;
+}
+
+.save-data .close-btn::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.save-data .close-btn::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* Data List Styles */
+.save-data .data-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.save-data .data-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #333;
+}
+
+.save-data .data-content {
+  flex: 1;
+  font-weight: bold;
+  color: #4caf50;
+}
+
+.save-data .data-input {
+  flex: 1;
+  max-width: 200px;
+  background: #111;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+
+.save-data .data-header {
+  color: #ff5722;
+  font-size: 1.2em;
+  margin: 15px 0 10px;
+  cursor: pointer;
+}
+
+.save-data hr {
+  border: none;
+  border-top: 1px solid #333;
+  margin: 15px 0;
+}
+
+/* Tooltip styles */
+.save-data [data-tooltip] {
+  position: relative;
+}
+
+.save-data [data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background: #333;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  white-space: nowrap;
+  z-index: 100;
+}
+
+/* Scrollbar styling */
+.save-data::-webkit-scrollbar {
+  width: 8px;
+}
+
+.save-data::-webkit-scrollbar-track {
+  background: #222;
+}
+
+.save-data::-webkit-scrollbar-thumb {
+  background: #4caf50;
+  border-radius: 4px;
+}
+
+.save-data::-webkit-scrollbar-thumb:hover {
+  background: #45a049;
+}
+
+@media only screen and (max-width: 1100px) {
+  /* section2 */
+
+  #h2proj {
+    margin-top: 20px;
+    color: white;
+    font-size: 20px;
+    font-family: "Poppins", sans-serif;
+    text-align: center;
+  }
+
+  .mySlides {
+    height: 320px;
+    cursor: pointer;
+  }
+
+  .w3-content {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .w3-button {
+    cursor: pointer;
+    font-size: 30px;
+    border: transparent;
+    background-color: transparent;
+    color: #a5e245;
+  }
+  .save-info {
+    height: 25vh;
+  }
+  .icon {
+    height: 40px;
+    width: 40px;
+  }
+}
+
+@media only screen and (max-width: 700px) {
+  #footimg1 {
+    width: 90px;
+    height: 30px;
+    margin-right: 7px;
+  }
+
+  #footimg2 {
+    width: 90px;
+    height: 30px;
+    margin-left: 7px;
+  }
+  .text-container {
+    position: absolute;
+    right: 10px;
+    width: 150px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1000px; /* Adding perspective for 3D effect */
+  }
+  .text {
+    cursor: default;
+    font-family: "Poppins", sans-serif;
+    font-size: 15px;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backface-visibility: hidden; /* Hide the back side during flip */
+    transform: rotateX(0deg); /* Rotate vertically */
+    transition: transform 1s ease-in-out;
+  }
+  #sites {
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    color: #a5e245;
+    font-size: 18px;
+    margin-left: 20px;
+    margin-top: 20px;
+    font-family: "Poppins", sans-serif;
+    overflow: hidden;
+  }
+  .h5a {
+    font-family: "Poppins", sans-serif;
+    color: white;
+    margin-top: 20px;
+    margin-left: 20px;
+    font-size: 18px;
+  }
+  h1 {
+    font-size: 22px;
+  }
+  #footer {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    position: relative;
+    bottom: 0px;
+    background-color: black;
+    height: 80px;
+    width: 69vw;
+  }
+
+  /* section2 */
+
+  #h2proj {
+    margin-top: 15px;
+    color: white;
+    font-size: 16px;
+    font-family: "Poppins", sans-serif;
+    text-align: center;
+  }
+
+  .mySlides {
+    height: 250px;
+    cursor: pointer;
+  }
+
+  .w3-content {
+    margin-bottom: 15px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .w3-button {
+    cursor: pointer;
+    font-size: 25px;
+    border: transparent;
+    background-color: transparent;
+    color: #a5e245;
+  }
+  .save-info {
+    height: 25vh;
+  }
+  #footer2 {
+    height: 60px;
+  }
+  .icon {
+    height: 40px;
+    width: 40px;
+  }
+}
+
+@media only screen and (max-width: 550px) {
+  #footimg1 {
+    width: 70px;
+    height: 22px;
+    margin-right: 7px;
+  }
+
+  #footimg2 {
+    width: 70px;
+    height: 22px;
+    margin-left: 7px;
+  }
+  .text-container {
+    position: absolute;
+    right: 10px;
+    width: 100px;
+    height: 22px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1000px; /* Adding perspective for 3D effect */
+  }
+  .text {
+    cursor: default;
+    font-family: "Poppins", sans-serif;
+    font-size: 12px;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backface-visibility: hidden; /* Hide the back side during flip */
+    transform: rotateX(0deg); /* Rotate vertically */
+    transition: transform 1s ease-in-out;
+  }
+  #sites {
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    color: #a5e245;
+    font-size: 14px;
+    margin-left: 20px;
+    margin-top: 20px;
+    font-family: "Poppins", sans-serif;
+    overflow: hidden;
+  }
+  .h5a {
+    font-family: "Poppins", sans-serif;
+    color: white;
+    margin-top: 20px;
+    margin-left: 20px;
+    font-size: 14px;
+  }
+  h1 {
+    font-size: 19px;
+  }
+  #footer {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    position: relative;
+    bottom: 0px;
+    background-color: black;
+    height: 80px;
+    width: 69vw;
+  }
+
+  /* section2 */
+
+  #h2proj {
+    margin-top: 15px;
+    color: white;
+    font-size: 13px;
+    font-family: "Poppins", sans-serif;
+    text-align: center;
+  }
+
+  .mySlides {
+    height: 180px;
+    cursor: pointer;
+  }
+
+  .w3-content {
+    margin-bottom: 15px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .w3-button {
+    cursor: pointer;
+    font-size: 25px;
+    border: transparent;
+    background-color: transparent;
+    color: #a5e245;
+  }
+
+  .save-info {
+    height: 20vh;
+  }
+  #footer2 {
+    height: 50px;
+  }
+  .icon {
+    height: 36px;
+    width: 36px;
+  }
+}
+
+@media only screen and (max-width: 400px) {
+  #footimg1 {
+    width: 55px;
+    height: 18px;
+    margin-right: 6px;
+  }
+
+  #footimg2 {
+    width: 55px;
+    height: 18px;
+    margin-left: 6px;
+  }
+  .text-container {
+    position: absolute;
+    right: 10px;
+    width: 60px;
+    height: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1000px; /* Adding perspective for 3D effect */
+  }
+  .text {
+    cursor: default;
+    font-family: "Poppins", sans-serif;
+    font-size: 10px;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backface-visibility: hidden; /* Hide the back side during flip */
+    transform: rotateX(0deg); /* Rotate vertically */
+    transition: transform 1s ease-in-out;
+  }
+  #sites {
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    color: #a5e245;
+    font-size: 12px;
+    margin-left: 20px;
+    margin-top: 20px;
+    font-family: "Poppins", sans-serif;
+    overflow: hidden;
+  }
+  .h5a {
+    font-family: "Poppins", sans-serif;
+    color: white;
+    margin-top: 20px;
+    margin-left: 20px;
+    font-size: 12px;
+  }
+  h1 {
+    font-size: 15px;
+  }
+  #footer {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    position: relative;
+    bottom: 0px;
+    background-color: black;
+    height: 80px;
+    width: 69vw;
+  }
+
+  /* section2 */
+
+  #h2proj {
+    margin-top: 10px;
+    color: white;
+    font-size: 10px;
+    font-family: "Poppins", sans-serif;
+    text-align: center;
+  }
+
+  .mySlides {
+    height: 150px;
+    cursor: pointer;
+  }
+
+  .w3-content {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .w3-button {
+    cursor: pointer;
+    font-size: 20px;
+    border: transparent;
+    background-color: transparent;
+    color: #a5e245;
+  }
+
+  .save-info {
+    height: 20vh;
+  }
+  #footer2 {
+    height: 40px;
+  }
+  .icon {
+    height: 26px;
+    width: 26px;
+  }
+}
+
+@media only screen and (min-width: 1400px) {
+  #container {
+    height: 100vh;
+    width: 69vw;
+    background-color: black;
+  }
+  #nav {
+    background-color: #a5e245;
+    height: 80px;
+    margin-top: 30px;
+    display: flex;
+    align-items: center;
+  }
+  #h1 {
+    font-size: 35px;
+    margin-left: 40px;
+    font-family: "Poppins", sans-serif;
+    cursor: default;
+  }
+  .acute-angle-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 18px,
+      #2b3b13 18px,
+      #2b3b13 36px
+    );
+    background-size: 200% 100%;
+    animation: moveLines 30s linear infinite;
+  }
+  .h5a {
+    font-family: "Poppins", sans-serif;
+    color: white;
+    margin-top: 30px;
+    margin-left: 40px;
+    font-size: 32px;
+    cursor: default;
+  }
+  #h1b {
+    font-family: "Poppins", sans-serif;
+    color: #a5e245;
+    margin-left: 40px;
+    margin-top: 30px;
+    cursor: default;
+    font-size: 34px;
+  }
+  #sites {
+    height: 800px;
+    display: flex;
+    flex-direction: column;
+    color: #a5e245;
+    font-size: 32px;
+    margin-left: 40px;
+    margin-top: 30px;
+    font-family: "Poppins", sans-serif;
+    overflow: hidden;
+  }
+  .a {
+    margin-bottom: 20px;
+    cursor: pointer;
+    color: #a5e245;
+    text-decoration: none;
+  }
+  #footer {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    position: relative;
+    bottom: 0px;
+    background-color: black;
+    height: 160px;
+    width: 69vw;
+  }
+  #dashed-line-two {
+    width: 100%;
+    height: 12px;
+    border-top: 12px dashed #a5e245;
+    margin-bottom: 30px;
+  }
+  .f2 {
+    color: bisque;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 69vw;
+  }
+  #footimg1 {
+    width: 180px;
+    height: 60px;
+    margin-right: 14px;
+  }
+  #footimg2 {
+    width: 180px;
+    height: 60px;
+    margin-left: 14px;
+  }
+  .text-container {
+    position: absolute;
+    right: 20px;
+    width: 340px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1000px; /* Adding perspective for 3D effect */
+  }
+  .text {
+    cursor: default;
+    font-family: "Poppins", sans-serif;
+    font-size: 32px;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backface-visibility: hidden; /* Hide the back side during flip */
+    transform: rotateX(0deg); /* Rotate vertically */
+    transition: transform 1s ease-in-out;
+  }
+  /* section2 */
+
+  #h2proj {
+    margin-top: 30px;
+    color: white;
+    font-size: 34px;
+    font-family: "Poppins", sans-serif;
+    text-align: center;
+  }
+
+  .mySlides {
+    height: 550px;
+    cursor: pointer;
+  }
+
+  .w3-content {
+    margin-bottom: 30px;
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .w3-button {
+    cursor: pointer;
+    font-size: 35px;
+    border: transparent;
+    background-color: transparent;
+    color: #a5e245;
+  }
+  .icon {
+    height: 70px;
+    width: 70px;
+  }
+}

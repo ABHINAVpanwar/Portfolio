@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Projects</title>
+    <link rel="stylesheet" href="../STYLE/projects.css" />
+    <link rel="icon" href="../IMG/icon.png" />
+    <style>
+      /* Splash Screen Styles */
+      #splash-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #splash-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* Hide main content initially */
+      #container {
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+
+      .loaded #container {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body id="body">
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+      <video id="splash-video" autoplay>
+        <source src="../VIDEO/NFSMW.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    </div>
+
+    <!-- Main Website Content -->
+    <div id="container">
+      <nav id="nav">
+        <h1 id="h1">PROJECTS</h1>
+      </nav>
+      <div class="save-info">
+        <div class="save-info-background grid" id="saveinfo">
+          <h5 class="h5a" id="playername">NAME : &nbsp ABHINAV &nbsp PANWAR</h5>
+          <h5 id="filehash" class="h5a">HASH : </h5>
+        </div>
+      </div>
+      <section id="sec2">
+        <h1 id="h1b">MAJOR PROJECTS :</h1>
+        <h3 id="h2proj"></h3>
+        <div class="w3-content w3-display-container">
+          <button
+            class="w3-button w3-black w3-display-left"
+            onclick="plusDivs(-1)"
+          >
+            &#10094;
+          </button>
+          <img class="mySlides" src="../IMG/proj3.png" style="width: 80%" />
+          <img class="mySlides" src="../IMG/proj1.png" style="width: 80%" />
+          <img class="mySlides" src="../IMG/proj2.png" style="width: 80%" />
+          <button
+            class="w3-button w3-black w3-display-right"
+            onclick="plusDivs(1)"
+          >
+            &#10095;
+          </button>
+        </div>
+      </section>
+      <section id="sec">
+        <h1 id="h1b">MINOR PROJECTS:</h1>
+        <div id="sites" tabindex="0">
+          <a
+            class="a"
+            href="https://abhinavpanwar.github.io/AMAZON_PRIME_CLONE/"
+            target="_blank"
+            >◼ &nbsp &nbsp AMAZON PRIME CLONE</a
+          >
+          <a class="a" href="https://utkarshpanwar.netlify.app/" target="_blank"
+            >◼ &nbsp &nbsp UTK PORTFOLIO</a
+          >
+          <a class="a" href="https://kingofcards.netlify.app/" target="_blank"
+            >◼ &nbsp &nbsp KING OF CARDS</a
+          >
+          <a
+            class="a"
+            href="https://top-10k-imdb-ljwe.onrender.com"
+            target="_blank"
+            >◼ &nbsp &nbsp TOP 10K IMDB</a
+          >
+          <a
+            class="a"
+            href="https://tic-tac-toe-x29t.onrender.com"
+            target="_blank"
+            >◼ &nbsp &nbsp TIC TAC TOE</a
+          >
+          <a
+            class="a"
+            href="https://abhinavpanwar.github.io/Parallax/"
+            target="_blank"
+            >◼ &nbsp &nbsp PARALLAX</a
+          >
+          <a
+            class="a"
+            href="https://abhinavpanwar.github.io/AOT_QUIZ/"
+            target="_blank"
+            >◼ &nbsp &nbsp AOT QUIZ</a
+          >
+          <a class="a" href="https://mytierlist.netlify.app/" target="_blank"
+            >◼ &nbsp &nbsp TIER LIST</a
+          >
+          <a
+            class="a"
+            href="https://virtua1assistant.netlify.app/"
+            target="_blank"
+            >◼ &nbsp &nbsp AI</a
+          >
+        </div>
+      </section>
+      <footer id="footer">
+        <div id="dashed-line-two"></div>
+        <div class="f2">
+          <a href="../index.html"
+            ><img src="../IMG/back.png" id="footimg1"
+          /></a>
+          <a>
+            <img src="../IMG/accept.png" id="footimg2" />
+          </a>
+          <div class="text-container">
+            <div class="text" id="one">@panwar</div>
+            <div class="text" id="two">PROJECTS</div>
+          </div>
+        </div>
+      </footer>
+    
+      <div class="save-data" id="savedata"></div>
+    
+      <input type="file" id="opensave" style="display: none;"></input>
+
+      <footer id="footer2">
+          <button class="button-icon" id="openbutton">
+            <img src="../IMG/opensaveicon.png" class="icon" />
+          </button>
+          <button class="button-icon" id="savebutton">
+            <img src="../IMG/saveicon.png" class="icon" />
+          </button>
+          <button class="button-icon" id="soundbutton">
+            <img
+              src="../IMG/soundicon.png"
+              class="icon"
+            />
+          </button>
+          <button class="button-icon" id="musicbutton">
+            <img
+              src="../IMG/musicicon.png"
+              class="icon"
+            />
+          </button>
+      </footer>
+    </div>
+    <script src="../SCRIPT/projects.js"></script>
+    <script>
+      // Splash Screen Functionality
+      document.addEventListener("DOMContentLoaded", function () {
+        const splashScreen = document.getElementById("splash-screen");
+        const splashVideo = document.getElementById("splash-video");
+        const container = document.getElementById("container");
+        const body = document.getElementById("body");
+
+        // Hide body overflow during splash screen
+        body.style.overflow = "hidden";
+
+        // When video ends, show website
+        splashVideo.addEventListener("ended", function () {
+          splashScreen.classList.add("hidden");
+          body.style.overflow = "auto";
+          body.classList.add("loaded");
+        });
+
+        // For mobile devices where autoplay might be blocked
+        splashVideo.play().catch((e) => {
+          console.log("Autoplay prevented:", e);
+          // If autoplay fails, proceed to website
+          splashScreen.classList.add("hidden");
+          body.style.overflow = "auto";
+          body.classList.add("loaded");
+        });
+
+        // Fallback in case video doesn't load
+        setTimeout(function () {
+          if (
+            !splashVideo.ended &&
+            !splashScreen.classList.contains("hidden")
+          ) {
+            splashScreen.classList.add("hidden");
+            body.style.overflow = "auto";
+            body.classList.add("loaded");
+          }
+        }, 10000); // 10 seconds timeout
+      });
+    </script>
+    <script src="../SCRIPT/users.js"></script>
+    <script src="../SCRIPT/NFSeditor.js"></script>
+  </body>
+</html>

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Server</title>
+    <link rel="icon" href="static/icon.png" />
+    <style>
+      :root {
+        --bg-color: #121212;
+        --card-bg: #1e1e1e;
+        --text-color: #ffffff;
+        --accent-color: #4caf50;
+        --secondary-color: #2196f3;
+        --error-color: #f44336;
+        --border-radius: 8px;
+        --padding: 1rem;
+        --shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        --font: "Segoe UI", sans-serif;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--font);
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        padding: var(--padding);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: default;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      header h1 {
+        font-size: 1.8rem;
+        font-weight: 600;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 800px;
+      }
+
+      .card {
+        background-color: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: var(--padding);
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+      }
+
+      h2 {
+        color: var(--accent-color);
+        margin-bottom: 1rem;
+        font-size: 1.3rem;
+      }
+
+      .current-value {
+        font-size: 1.2rem;
+        margin-bottom: 1.5rem;
+        padding: 0.8rem;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: var(--border-radius);
+        word-break: break-word;
+      }
+
+      .form-group {
+        margin-bottom: 1.2rem;
+      }
+
+      label {
+        display: block;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+      }
+
+      input[type="text"],
+      textarea,
+      select {
+        width: 100%;
+        padding: 0.8rem;
+        font-size: 1rem;
+        border-radius: var(--border-radius);
+        border: 1px solid #444;
+        background-color: #2a2a2a;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      button {
+        background-color: var(--accent-color);
+        color: white;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        font-size: 1rem;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+      }
+
+      button:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+
+      button.secondary {
+        background-color: var(--secondary-color);
+      }
+
+      button.danger {
+        background-color: var(--error-color);
+      }
+
+      .options-list {
+        margin: 1.5rem 0;
+      }
+
+      .option-item {
+        background-color: rgba(0, 0, 0, 0.2);
+        padding: 0.8rem;
+        margin-bottom: 0.5rem;
+        border-radius: var(--border-radius);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .vote-count {
+        min-width: 60px;
+        text-align: right;
+      }
+
+      .poll-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+
+      .status-message {
+        padding: 0.8rem;
+        margin: 1rem 0;
+        border-radius: var(--border-radius);
+        font-weight: 500;
+      }
+
+      .success {
+        background-color: rgba(76, 175, 80, 0.2);
+        color: var(--accent-color);
+      }
+
+      .error {
+        background-color: rgba(244, 67, 54, 0.2);
+        color: var(--error-color);
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        header h1 {
+          font-size: 1.4rem;
+        }
+
+        .card {
+          padding: 0.8rem;
+        }
+
+        h2 {
+          font-size: 1.1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Server</h1>
+    </header>
+
+    <div class="container">
+      <!-- Server Status -->
+      <div class="card">
+        <h2>Server Status</h2>
+        <div id="server-status" class="current-value">
+          Checking server status...
+        </div>
+        <button id="refresh-status">Refresh Status</button>
+      </div>
+
+      <!-- Headline Management -->
+      <div class="card">
+        <h2>Headline Management</h2>
+        <div class="current-value" id="current_headline">
+          Loading current headline...
+        </div>
+
+        <form id="updateForm">
+          <div class="form-group">
+            <label for="new_headline">Update Headline:</label>
+            <input
+              type="text"
+              id="new_headline"
+              required
+            />
+          </div>
+          <button type="submit">Update Headline</button>
+        </form>
+      </div>
+
+      <!-- Poll Management -->
+      <div class="card">
+        <h2>Poll Management</h2>
+        <div id="poll-status" class="current-value">No active poll</div>
+        <div id="poll-options" class="options-list hidden"></div>
+        <div class="poll-actions hidden" id="poll-actions">
+          <button class="danger" id="end-poll">End Poll</button>
+          <button class="secondary" id="refresh-poll">Refresh Results</button>
+        </div>
+
+        <form id="pollForm">
+          <div class="form-group">
+            <label for="poll_question">Poll Question:</label>
+            <input type="text" id="poll_question" required />
+          </div>
+
+          <div class="form-group">
+            <label for="poll_options">Poll Options:</label>
+            <textarea id="poll_options" required></textarea>
+          </div>
+
+          <button type="submit" class="secondary">Create Poll</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        // DOM Elements
+        const updateForm = document.getElementById("updateForm");
+        const currentHeadline = document.getElementById("current_headline");
+        const pollForm = document.getElementById("pollForm");
+        const pollStatus = document.getElementById("poll-status");
+        const pollOptions = document.getElementById("poll-options");
+        const pollActions = document.getElementById("poll-actions");
+        const endPollBtn = document.getElementById("end-poll");
+        const refreshPollBtn = document.getElementById("refresh-poll");
+        const serverStatus = document.getElementById("server-status");
+        const refreshBtn = document.getElementById("refresh-status");
+
+        // Base API URL
+        const API_BASE = window.location.origin;
+        let currentPollId = null;
+        let refreshInterval = null;
+
+        // Helper functions
+        function showMessage(message, type, parentElement) {
+          const msgElement = document.createElement("div");
+          msgElement.className = `${type} status-message`;
+          msgElement.textContent = message;
+
+          parentElement.insertBefore(msgElement, parentElement.firstChild);
+
+          setTimeout(() => {
+            msgElement.remove();
+          }, 3000);
+        }
+
+        async function fetchWithErrorHandling(url, options = {}) {
+          try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(
+                errorData.error || `HTTP error! status: ${response.status}`
+              );
+            }
+            return await response.json();
+          } catch (error) {
+            console.error("Fetch error:", error);
+            throw error;
+          }
+        }
+
+        // Load current headline
+        async function loadHeadline() {
+          try {
+            const data = await fetchWithErrorHandling(`${API_BASE}/api/get_h3`);
+            currentHeadline.textContent = data.h3_text || "No headline set";
+          } catch (error) {
+            currentHeadline.textContent = "Error loading headline";
+            console.error("Headline load error:", error);
+          }
+        }
+
+        // Load current poll and results
+        async function loadPoll() {
+          try {
+            // Get current poll
+            const pollResponse = await fetchWithErrorHandling(
+              `${API_BASE}/api/current_poll`
+            );
+
+            if (pollResponse.error || !pollResponse.question) {
+              pollStatus.textContent = "No active poll";
+              pollOptions.classList.add("hidden");
+              pollActions.classList.add("hidden");
+              currentPollId = null;
+              return;
+            }
+
+            currentPollId = pollResponse.id;
+            pollStatus.textContent = pollResponse.question;
+
+            // Get poll results
+            const resultsResponse = await fetchWithErrorHandling(
+              `${API_BASE}/api/poll_results`
+            );
+
+            // Display poll with results
+            pollOptions.innerHTML = pollResponse.options
+              .map((option, index) => {
+                const voteCount = resultsResponse.results?.[index] || 0;
+                return `
+                            <div class="option-item">
+                                <span>${option}</span>
+                                <span class="vote-count">${voteCount} votes</span>
+                            </div>
+                        `;
+              })
+              .join("");
+
+            pollOptions.classList.remove("hidden");
+            pollActions.classList.remove("hidden");
+          } catch (error) {
+            pollStatus.textContent = "Error loading poll";
+            pollOptions.classList.add("hidden");
+            pollActions.classList.add("hidden");
+            console.error("Poll load error:", error);
+          }
+        }
+
+        // Load server status
+        async function loadServerStatus() {
+          try {
+            const data = await fetchWithErrorHandling(
+              `${API_BASE}/api/healthcheck`
+            );
+            serverStatus.innerHTML = `
+                        Status: <strong>${data.status}</strong><br>
+                        Active Users: ${data.active_users}<br>
+                        Server Time: ${data.server_time}<br>
+                        Version: ${data.version}
+                    `;
+          } catch (error) {
+            serverStatus.textContent = "Error loading server status";
+            console.error("Status load error:", error);
+          }
+        }
+
+        // Updated endCurrentPoll function
+        async function endCurrentPoll() {
+          if (
+            !confirm(
+              "Are you sure you want to end the current poll ?"
+            )
+          ) {
+            return;
+          }
+
+          try {
+            const response = await fetchWithErrorHandling(
+              `${API_BASE}/api/end_poll`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({}), // No need for poll_id since we're clearing all
+              }
+            );
+
+            if (response.error) {
+              throw new Error(response.error);
+            }
+
+            showMessage("Poll ended successfully", "success", pollForm);
+
+            // Reset the UI
+            pollStatus.textContent = "No active poll";
+            pollOptions.classList.add("hidden");
+            pollActions.classList.add("hidden");
+            currentPollId = null;
+          } catch (error) {
+            showMessage(
+              `Failed to end poll: ${error.message}`,
+              "error",
+              pollForm
+            );
+            console.error("End poll error:", error);
+          }
+        }
+
+        // Initialize all data
+        async function initialize() {
+          await Promise.all([loadHeadline(), loadPoll(), loadServerStatus()]);
+
+          // Set up auto-refresh for poll results
+          if (refreshInterval) clearInterval(refreshInterval);
+          refreshInterval = setInterval(loadPoll, 5000);
+        }
+
+        // Event listeners
+        updateForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const newHeadline = document
+            .getElementById("new_headline")
+            .value.trim();
+
+          if (!newHeadline) {
+            showMessage("Please enter a headline", "error", updateForm);
+            return;
+          }
+
+          try {
+            await fetchWithErrorHandling(`${API_BASE}/api/set_h3`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ new_text: newHeadline }),
+            });
+
+            currentHeadline.textContent = newHeadline;
+            document.getElementById("new_headline").value = "";
+            showMessage(
+              "Headline updated successfully!",
+              "success",
+              updateForm
+            );
+          } catch (error) {
+            showMessage("Failed to update headline", "error", updateForm);
+            console.error("Update error:", error);
+          }
+        });
+
+        pollForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const question = document
+            .getElementById("poll_question")
+            .value.trim();
+          const options = document
+            .getElementById("poll_options")
+            .value.split("\n")
+            .map((opt) => opt.trim())
+            .filter((opt) => opt.length > 0);
+
+          if (!question || options.length < 2) {
+            showMessage(
+              "Please provide a question and at least 2 options",
+              "error",
+              pollForm
+            );
+            return;
+          }
+
+          try {
+            const response = await fetchWithErrorHandling(
+              `${API_BASE}/api/poll`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  question: question,
+                  options: options,
+                }),
+              }
+            );
+
+            if (response.error) {
+              throw new Error(response.error);
+            }
+
+            document.getElementById("poll_question").value = "";
+            document.getElementById("poll_options").value = "";
+            showMessage("Poll created successfully!", "success", pollForm);
+            await loadPoll();
+          } catch (error) {
+            showMessage(
+              `Failed to create poll: ${error.message}`,
+              "error",
+              pollForm
+            );
+            console.error("Poll creation error:", error);
+          }
+        });
+
+        endPollBtn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          await endCurrentPoll();
+        });
+
+        refreshPollBtn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          await loadPoll();
+          showMessage("Poll results refreshed", "success", pollForm);
+        });
+
+        refreshBtn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          await loadServerStatus();
+          showMessage(
+            "Status refreshed",
+            "success",
+            document.querySelector(".card:first-child")
+          );
+        });
+
+        // Initialize the page
+        initialize();
+      });
+    </script>
+  </body>
+</html>
