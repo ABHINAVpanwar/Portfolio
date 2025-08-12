@@ -174,7 +174,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     // Fetch and display the headline
     const response = await fetch(
-      "https://portfolio-yyhf.onrender.com/api/get_h3"
+      "https://abhinavpanwar.onrender.com/api/get_h3"
     );
     const { h3_text } = await response.json();
     document.getElementById("h3").textContent = h3_text;
@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadSurvey() {
   try {
     const response = await fetch(
-      "https://portfolio-yyhf.onrender.com/api/current_poll"
+      "https://abhinavpanwar.onrender.com/api/current_poll"
     );
 
     if (!response.ok) {
@@ -238,7 +238,7 @@ async function submitResponse(index, button) {
     button.style.opacity = "0.7";
 
     const response = await fetch(
-      "https://portfolio-yyhf.onrender.com/api/submit_response",
+      "https://abhinavpanwar.onrender.com/api/submit_response",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
