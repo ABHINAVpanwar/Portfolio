@@ -10,7 +10,7 @@ document.querySelectorAll("a").forEach((link) => {
 // Real-Time Active Users Tracker (v2.2 - Removed Ping Logic)
 class ActiveUsersTracker {
   static init() {
-    this.API_URL = "https://portfolio-yyhf.onrender.com/api/active_users";
+    this.API_URL = "https://abhinavpanwar.onrender.com/api/active_users";
     this.POLL_INTERVAL = 5000;
     this.EXIT_DELAY = 2000;
     this.ANIMATION_DURATION = 800;
