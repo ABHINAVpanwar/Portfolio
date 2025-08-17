@@ -63,7 +63,7 @@ container.addEventListener("keydown", (event) => {
     window.open("https://kingofcards.netlify.app/", "_blank");
   }
   if (event.key == "Enter" && currentIndeX == 3) {
-    window.open("https://top10kimdb.onrender.com", "_blank");
+    window.open("https://mediapedia.onrender.com", "_blank");
   }
   if (event.key == "Enter" && currentIndeX == 4) {
     window.open("https://onlinemultiplayer-tictactoe.onrender.com", "_blank");
