@@ -51,33 +51,36 @@ function scrollToIndex(index) {
 
 container.addEventListener("keydown", (event) => {
   if (event.key == "Enter" && currentIndeX == 0) {
+    window.open("https://cricket-score-manager.onrender.com/", "_blank");
+  }
+  if (event.key == "Enter" && currentIndeX == 1) {
     window.open(
       "https://abhinavpanwar.github.io/AMAZON_PRIME_CLONE/",
       "_blank"
     );
   }
-  if (event.key == "Enter" && currentIndeX == 1) {
+  if (event.key == "Enter" && currentIndeX == 2) {
     window.open("https://utkarshpanwar.netlify.app/", "_blank");
   }
-  if (event.key == "Enter" && currentIndeX == 2) {
+  if (event.key == "Enter" && currentIndeX == 3) {
     window.open("https://kingofcards.netlify.app/", "_blank");
   }
-  if (event.key == "Enter" && currentIndeX == 3) {
+  if (event.key == "Enter" && currentIndeX == 4) {
     window.open("https://mediapedia.onrender.com", "_blank");
   }
-  if (event.key == "Enter" && currentIndeX == 4) {
+  if (event.key == "Enter" && currentIndeX == 5) {
     window.open("https://onlinemultiplayer-tictactoe.onrender.com", "_blank");
   }
-  if (event.key == "Enter" && currentIndeX == 5) {
+  if (event.key == "Enter" && currentIndeX == 6) {
     window.open("https://abhinavpanwar.github.io/Parallax/", "_blank");
   }
-  if (event.key == "Enter" && currentIndeX == 6) {
+  if (event.key == "Enter" && currentIndeX == 7) {
     window.open("https://abhinavpanwar.github.io/AOT_QUIZ/", "_blank");
   }
-  if (event.key == "Enter" && currentIndeX == 7) {
+  if (event.key == "Enter" && currentIndeX == 8) {
     window.open("https://mytierlist.netlify.app/", "_blank");
   }
-  if (event.key == "Enter" && currentIndeX == 8) {
+  if (event.key == "Enter" && currentIndeX == 9) {
     window.open("https://virtua1assistant.netlify.app/", "_blank");
   }
   if (event.key === "ArrowUp") {
