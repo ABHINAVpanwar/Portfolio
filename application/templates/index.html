@@ -215,11 +215,7 @@
         <form id="updateForm">
           <div class="form-group">
             <label for="new_headline">Update Headline:</label>
-            <input
-              type="text"
-              id="new_headline"
-              required
-            />
+            <input type="text" id="new_headline" required />
           </div>
           <button type="submit">Update Headline</button>
         </form>
@@ -249,8 +245,54 @@
           <button type="submit" class="secondary">Create Poll</button>
         </form>
       </div>
-    </div>
+      <!-- Password Management -->
+      <div class="card">
+        <h2>Password Management</h2>
 
+        <div class="current-value" id="current-password">
+          Loading current password...
+        </div>
+
+        <form id="passwordForm">
+          <div class="form-group">
+            <label for="new_password">New Password:</label>
+            <input type="text" id="new_password" required />
+          </div>
+          <button type="submit">Update Password</button>
+        </form>
+        <!-- Add this after the password form, before the password-status div -->
+        <div
+          style="
+            margin-top: 20px;
+            border-top: 1px solid #444;
+            padding-top: 15px;
+          "
+        >
+          <h3
+            style="
+              color: var(--accent-color);
+              margin-bottom: 10px;
+              font-size: 1.1rem;
+            "
+          >
+            Chat Management
+          </h3>
+          <button
+            id="clear-chat-btn"
+            class="danger"
+            style="width: 100%; margin-top: 5px"
+          >
+            Clear Chat
+          </button>
+          <div
+            id="chat-status"
+            class="status-message hidden"
+            style="margin-top: 10px"
+          ></div>
+        </div>
+        <div id="password-status" class="status-message hidden"></div>
+      </div>
+    </div>
     <script>
       document.addEventListener("DOMContentLoaded", async () => {
         // DOM Elements
@@ -264,6 +306,16 @@
         const refreshPollBtn = document.getElementById("refresh-poll");
         const serverStatus = document.getElementById("server-status");
         const refreshBtn = document.getElementById("refresh-status");
+
+        // Password Management Elements
+        const passwordForm = document.getElementById("passwordForm");
+        const currentPasswordDisplay =
+          document.getElementById("current-password");
+        const passwordStatus = document.getElementById("password-status");
+
+        // Add this line with other DOM elements:
+        const clearChatBtn = document.getElementById("clear-chat-btn");
+        const chatStatus = document.getElementById("chat-status");
 
         // Base API URL
         const API_BASE = window.location.origin;
@@ -283,6 +335,28 @@
           }, 3000);
         }
 
+        // Helper function for password status messages
+        function showPasswordStatus(message, type) {
+          passwordStatus.textContent = message;
+          passwordStatus.className = `${type} status-message`;
+          passwordStatus.classList.remove("hidden");
+
+          setTimeout(() => {
+            passwordStatus.classList.add("hidden");
+          }, 3000);
+        }
+
+        // Add this with other helper functions:
+        function showChatStatus(message, type) {
+          chatStatus.textContent = message;
+          chatStatus.className = `${type} status-message`;
+          chatStatus.classList.remove("hidden");
+
+          setTimeout(() => {
+            chatStatus.classList.add("hidden");
+          }, 3000);
+        }
+
         async function fetchWithErrorHandling(url, options = {}) {
           try {
             const response = await fetch(url, options);
@@ -296,6 +370,19 @@
           } catch (error) {
             console.error("Fetch error:", error);
             throw error;
+          }
+        }
+
+        // Load current password
+        async function loadCurrentPassword() {
+          try {
+            const data = await fetchWithErrorHandling(
+              `${API_BASE}/get_password`
+            );
+            currentPasswordDisplay.textContent = `${data.password}`;
+          } catch (error) {
+            currentPasswordDisplay.textContent = "Error loading password";
+            console.error("Password load error:", error);
           }
         }
 
@@ -339,11 +426,11 @@
               .map((option, index) => {
                 const voteCount = resultsResponse.results?.[index] || 0;
                 return `
-                            <div class="option-item">
-                                <span>${option}</span>
-                                <span class="vote-count">${voteCount} votes</span>
-                            </div>
-                        `;
+                        <div class="option-item">
+                            <span>${option}</span>
+                            <span class="vote-count">${voteCount} votes</span>
+                        </div>
+                    `;
               })
               .join("");
 
@@ -364,11 +451,11 @@
               `${API_BASE}/api/healthcheck`
             );
             serverStatus.innerHTML = `
-                        Status: <strong>${data.status}</strong><br>
-                        Active Users: ${data.active_users}<br>
-                        Server Time: ${data.server_time}<br>
-                        Version: ${data.version}
-                    `;
+                    Status: <strong>${data.status}</strong><br>
+                    Active Users: ${data.active_users}<br>
+                    Server Time: ${data.server_time}<br>
+                    Version: ${data.version}
+                `;
           } catch (error) {
             serverStatus.textContent = "Error loading server status";
             console.error("Status load error:", error);
@@ -377,11 +464,7 @@
 
         // Updated endCurrentPoll function
         async function endCurrentPoll() {
-          if (
-            !confirm(
-              "Are you sure you want to end the current poll ?"
-            )
-          ) {
+          if (!confirm("Are you sure you want to end the current poll ?")) {
             return;
           }
 
@@ -420,7 +503,12 @@
 
         // Initialize all data
         async function initialize() {
-          await Promise.all([loadHeadline(), loadPoll(), loadServerStatus()]);
+          await Promise.all([
+            loadHeadline(),
+            loadPoll(),
+            loadServerStatus(),
+            loadCurrentPassword(), // Load password too
+          ]);
 
           // Set up auto-refresh for poll results
           if (refreshInterval) clearInterval(refreshInterval);
@@ -514,6 +602,47 @@
           }
         });
 
+        // Password form submit
+        passwordForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const newPassword = document
+            .getElementById("new_password")
+            .value.trim();
+
+          if (!newPassword) {
+            showPasswordStatus("Please enter a password", "error");
+            return;
+          }
+
+          try {
+            const response = await fetchWithErrorHandling(
+              `${API_BASE}/set_password`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ new_password: newPassword }),
+              }
+            );
+
+            // Clear the form
+            document.getElementById("new_password").value = "";
+
+            // Show success message
+            showPasswordStatus("Password updated successfully!", "success");
+
+            // Update the displayed password
+            await loadCurrentPassword();
+          } catch (error) {
+            showPasswordStatus(
+              `Failed to update password: ${error.message}`,
+              "error"
+            );
+            console.error("Password update error:", error);
+          }
+        });
+
         endPollBtn.addEventListener("click", async (e) => {
           e.preventDefault();
           await endCurrentPoll();
@@ -533,6 +662,42 @@
             "success",
             document.querySelector(".card:first-child")
           );
+        });
+
+        // Add this at the end with other event listeners:
+        clearChatBtn.addEventListener("click", async (e) => {
+          e.preventDefault();
+
+          if (
+            !confirm(
+              "Sure!"
+            )
+          ) {
+            return;
+          }
+
+          try {
+            const response = await fetchWithErrorHandling(
+              `${API_BASE}/clear_messages`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+
+            showChatStatus(
+              "All chat messages cleared successfully!",
+              "success"
+            );
+          } catch (error) {
+            showChatStatus(
+              `Failed to clear chat: ${error.message}`,
+              "error"
+            );
+            console.error("Clear chat error:", error);
+          }
         });
 
         // Initialize the page
