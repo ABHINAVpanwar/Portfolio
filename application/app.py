@@ -8,6 +8,8 @@ import os
 import sqlite3
 import json
 import logging
+from datetime import datetime
+import pytz
 
 app = Flask(__name__)
 
@@ -21,8 +23,8 @@ CORS(app,
          r"/api/*": {
              "origins": [
                  "https://abhinavpanwar.netlify.app",
-                 "http://127.0.0.1:5500",
-                 "http://localhost:5500"
+                 "http://127.0.0.1:5501",
+                 "http://localhost:5501"
              ],
              "supports_credentials": True,
              "allow_headers": ["Content-Type"],
@@ -31,6 +33,24 @@ CORS(app,
              "max_age": 600
          }
      })
+
+CORS(app, resources={
+    r"/get_messages": {"origins": [
+                 "https://abhinavpanwar.netlify.app",
+                 "http://127.0.0.1:5501",
+                 "http://localhost:5501"
+             ]},
+    r"/send_message": {"origins": [
+                 "https://abhinavpanwar.netlify.app",
+                 "http://127.0.0.1:5501",
+                 "http://localhost:5501"
+             ]},
+    r"/get_password": {"origins": [
+                 "https://abhinavpanwar.netlify.app",
+                 "http://127.0.0.1:5501",
+                 "http://localhost:5501"
+             ]}
+})
 
 app.config.update(
     SESSION_COOKIE_SECURE=True,
@@ -379,6 +399,57 @@ def end_poll():
     finally:
         if 'conn' in locals():
             conn.close()
+
+messages = []  # Define the messages list globally
+PASSWORD = "password"  # Default password
+
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    data = request.json
+    sender = data.get('sender')
+    message = data.get('message')
+
+    if sender and message:
+        current_time = datetime.now(pytz.timezone('Asia/Kolkata')).strftime("%d-%m-%Y %I:%M %p")
+        messages.append({'sender': sender, 'message': message, 'time': current_time})
+        return jsonify({'status': 'Message received', 'message': data})
+    
+    return jsonify({'status': 'error', 'message': 'Invalid data'}), 400
+
+@app.route('/get_messages', methods=['GET'])
+def get_messages():
+    return jsonify(messages)
+
+@app.route('/get_password', methods=['GET'])
+def get_password():
+    global PASSWORD
+    return jsonify({"password": PASSWORD})
+
+@app.route('/set_password', methods=['POST'])
+def set_password():
+    global PASSWORD
+    if not request.is_json:
+        return jsonify({"error": "Content-Type must be application/json"}), 415
+    
+    try:
+        data = request.get_json()
+        new_password = data.get('new_password', '').strip()
+        
+        if not new_password:
+            return jsonify({"error": "Password cannot be empty"}), 400
+        
+        PASSWORD = new_password
+        return jsonify({"status": "success", "message": "Password updated"})
+    except Exception as e:
+        logger.error(f"Error setting password: {str(e)}")
+        return jsonify({"error": "Failed to update password"}), 500
+    
+@app.route('/clear_messages', methods=['POST'])
+def clear_messages():
+    global messages
+    messages.clear()
+    logger.info("All chat messages cleared")
+    return jsonify({"status": "success", "message": "All chat messages cleared"})
 
 if __name__ == '__main__':
     init_db()
