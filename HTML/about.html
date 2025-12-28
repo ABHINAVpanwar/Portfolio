@@ -330,8 +330,11 @@
       </div>
     </div>
     <div id="overlay"></div>
+<<<<<<< HEAD
     <!-- Hidden YouTube Player Container -->
     <div id="youtube-player" style="display: none"></div>
+=======
+>>>>>>> 3f78beffff0581428db0bcb8fa8ea7f7f8441afa
     <div id="loginDiv">
       <input
         type="text"
@@ -361,7 +364,11 @@
     </div>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
+<<<<<<< HEAD
       let lastMessageCount = 0;
+=======
+      let lastMessageCount = 0; // Track the last number of messages
+>>>>>>> 3f78beffff0581428db0bcb8fa8ea7f7f8441afa
       let isAuthenticated = false;
       let username = "";
 
@@ -376,7 +383,10 @@
         meme7: "../SOUND/memes/among-us.mp3",
       };
 
+<<<<<<< HEAD
       // Keep all your existing authentication functions...
+=======
+>>>>>>> 3f78beffff0581428db0bcb8fa8ea7f7f8441afa
       async function fetchPassword() {
         try {
           const response = await fetch(
@@ -425,7 +435,11 @@
           chatbox.style.display = "none";
         } else {
           chatbox.style.display = "flex";
+<<<<<<< HEAD
           icon.style.background = "";
+=======
+          icon.style.background = ""; // Clear red alert when chat opens
+>>>>>>> 3f78beffff0581428db0bcb8fa8ea7f7f8441afa
         }
       }
 
@@ -433,7 +447,11 @@
         .getElementById("message")
         .addEventListener("keypress", function (event) {
           if (event.key === "Enter") {
+<<<<<<< HEAD
             event.preventDefault();
+=======
+            event.preventDefault(); // Prevents unintended form submission
+>>>>>>> 3f78beffff0581428db0bcb8fa8ea7f7f8441afa
             sendMessage();
           }
         });
@@ -479,6 +497,10 @@
                 `<div class="message"><strong>${msg.sender}:</strong> ${msg.message} <span style="color: #888; font-size: 10px;">${msg.time}</span></div>`
             )
             .join("");
+<<<<<<< HEAD
+=======
+          // messagesDiv.scrollTop = messagesDiv.scrollHeight;
+>>>>>>> 3f78beffff0581428db0bcb8fa8ea7f7f8441afa
 
           if (data.length > lastMessageCount) {
             updateMessageIcon(data[data.length - 1].message);
@@ -490,6 +512,7 @@
         }
       }
 
+<<<<<<< HEAD
       // SIMPLIFIED YouTube URL detection and playback
       function extractYouTubeUrl(message) {
         const youtubeRegex =
@@ -521,11 +544,28 @@
         }
 
         if (!mediaPlayed) {
+=======
+      function updateMessageIcon(lastMessage) {
+        const icon = document.getElementById("chat-icon");
+        const words = lastMessage.toLowerCase().split(" ");
+        let memePlayed = false;
+
+        for (const word of words) {
+          if (memeSounds[word]) {
+            playMemeSound(memeSounds[word]);
+            memePlayed = true;
+            break;
+          }
+        }
+
+        if (!memePlayed) {
+>>>>>>> 3f78beffff0581428db0bcb8fa8ea7f7f8441afa
           playNotificationSound();
           icon.style.background = "red";
         }
       }
 
+<<<<<<< HEAD
       // Simple YouTube audio playback (no UI needed)
       function playYouTubeAudio(videoId) {
         // Create hidden iframe for background playback
@@ -550,6 +590,8 @@
         }, 300000); // 5 minutes
       }
 
+=======
+>>>>>>> 3f78beffff0581428db0bcb8fa8ea7f7f8441afa
       function playMemeSound(soundFile) {
         const sound = new Audio(soundFile);
         sound.play();
@@ -565,7 +607,10 @@
         icon.style.background = "#4caf50";
       }
 
+<<<<<<< HEAD
       // Initialize
+=======
+>>>>>>> 3f78beffff0581428db0bcb8fa8ea7f7f8441afa
       setInterval(loadMessages, 2000);
       loadMessages();
 
