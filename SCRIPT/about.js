@@ -17,6 +17,8 @@ hamMenuIcon.addEventListener("click", () => {
     document.getElementById("B1").style.display === "none" ? "flex" : "none";
   document.getElementById("B2").style.display =
     document.getElementById("B2").style.display === "none" ? "flex" : "none";
+  document.getElementById("chai-section").style.display =
+    document.getElementById("chai-section").style.display === "none" ? "flex" : "none";
 });
 navLinks.forEach((navLinks) => {
   navLinks.addEventListener("click", () => {
