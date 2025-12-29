@@ -147,3 +147,11 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("Tracker initialization failed:", error);
   }
 });
+
+// Add this to your main JavaScript file
+window.addEventListener("pageshow", function (event) {
+  // If the page was loaded from cache (back/forward navigation)
+  if (event.persisted) {
+    window.location.reload();
+  }
+});
