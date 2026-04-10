@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -260,7 +260,6 @@
           </div>
           <button type="submit">Update Password</button>
         </form>
-        <!-- Add this after the password form, before the password-status div -->
         <div
           style="
             margin-top: 20px;
@@ -291,7 +290,181 @@
           ></div>
         </div>
         <div id="password-status" class="status-message hidden"></div>
+        <!-- Add this after the Chat Management div, before the password-status div -->
+        <div
+          style="
+            margin-top: 20px;
+            border-top: 1px solid #444;
+            padding-top: 15px;
+          "
+        >
+          <h3
+            style="
+              color: var(--accent-color);
+              margin-bottom: 10px;
+              font-size: 1.1rem;
+            "
+          >
+            Visitor Tracking
+          </h3>
+
+          <!-- Quick Stats -->
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 8px;
+              margin-bottom: 15px;
+            "
+          >
+            <div
+              style="
+                background: #2a2a2a;
+                padding: 10px;
+                border-radius: 6px;
+                text-align: center;
+              "
+            >
+              <div style="font-size: 0.7rem; color: #888">Total</div>
+              <div
+                id="visitor-total"
+                style="
+                  font-size: 1.2rem;
+                  font-weight: bold;
+                  color: var(--accent-color);
+                "
+              >
+                0
+              </div>
+            </div>
+            <div
+              style="
+                background: #2a2a2a;
+                padding: 10px;
+                border-radius: 6px;
+                text-align: center;
+              "
+            >
+              <div style="font-size: 0.7rem; color: #888">Today</div>
+              <div
+                id="visitor-today"
+                style="
+                  font-size: 1.2rem;
+                  font-weight: bold;
+                  color: var(--secondary-color);
+                "
+              >
+                0
+              </div>
+            </div>
+            <div
+              style="
+                background: #2a2a2a;
+                padding: 10px;
+                border-radius: 6px;
+                text-align: center;
+              "
+            >
+              <div style="font-size: 0.7rem; color: #888">Active (30m)</div>
+              <div
+                id="visitor-active"
+                style="font-size: 1.2rem; font-weight: bold; color: #ff9800"
+              >
+                0
+              </div>
+            </div>
+          </div>
+
+          <!-- Toggle Button -->
+          <button
+            id="toggle-visitors"
+            class="secondary"
+            style="width: 100%; margin-bottom: 10px; font-size: 0.9rem"
+          >
+            Show ▼
+          </button>
+
+          <!-- Visitors List (Hidden by default) -->
+          <div
+            id="visitors-list"
+            style="
+              display: none;
+              max-height: 300px;
+              overflow-y: auto;
+              background: #2a2a2a;
+              border-radius: 6px;
+              padding: 10px;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 8px;
+                font-size: 0.8rem;
+                color: #888;
+                padding: 0 5px;
+              "
+            >
+              <span>IP Address / Device</span>
+              <span>Last Seen</span>
+            </div>
+            <div id="visitors-container">Loading...</div>
+          </div>
+        </div>
       </div>
+      <style>
+        /* Visitor Tracking Styles */
+        #visitors-list::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        #visitors-list::-webkit-scrollbar-track {
+          background: #1a1a1a;
+          border-radius: 3px;
+        }
+
+        #visitors-list::-webkit-scrollbar-thumb {
+          background: #444;
+          border-radius: 3px;
+        }
+
+        #visitors-list::-webkit-scrollbar-thumb:hover {
+          background: #555;
+        }
+
+        #toggle-visitors {
+          transition: all 0.3s ease;
+        }
+
+        #toggle-visitors:hover {
+          opacity: 0.9;
+          transform: translateY(-1px);
+        }
+
+        .visitor-badge {
+          display: inline-block;
+          padding: 2px 6px;
+          border-radius: 3px;
+          font-size: 0.7rem;
+          margin-left: 6px;
+        }
+
+        .badge-desktop {
+          background-color: #2196f3;
+          color: white;
+        }
+
+        .badge-mobile {
+          background-color: #4caf50;
+          color: white;
+        }
+
+        .badge-tablet {
+          background-color: #ff9800;
+          color: white;
+        }
+      </style>
     </div>
     <script>
       document.addEventListener("DOMContentLoaded", async () => {
@@ -363,7 +536,7 @@
             if (!response.ok) {
               const errorData = await response.json();
               throw new Error(
-                errorData.error || `HTTP error! status: ${response.status}`
+                errorData.error || `HTTP error! status: ${response.status}`,
               );
             }
             return await response.json();
@@ -377,7 +550,7 @@
         async function loadCurrentPassword() {
           try {
             const data = await fetchWithErrorHandling(
-              `${API_BASE}/get_password`
+              `${API_BASE}/get_password`,
             );
             currentPasswordDisplay.textContent = `${data.password}`;
           } catch (error) {
@@ -402,7 +575,7 @@
           try {
             // Get current poll
             const pollResponse = await fetchWithErrorHandling(
-              `${API_BASE}/api/current_poll`
+              `${API_BASE}/api/current_poll`,
             );
 
             if (pollResponse.error || !pollResponse.question) {
@@ -418,7 +591,7 @@
 
             // Get poll results
             const resultsResponse = await fetchWithErrorHandling(
-              `${API_BASE}/api/poll_results`
+              `${API_BASE}/api/poll_results`,
             );
 
             // Display poll with results
@@ -448,7 +621,7 @@
         async function loadServerStatus() {
           try {
             const data = await fetchWithErrorHandling(
-              `${API_BASE}/api/healthcheck`
+              `${API_BASE}/api/healthcheck`,
             );
             serverStatus.innerHTML = `
                     Status: <strong>${data.status}</strong><br>
@@ -477,7 +650,7 @@
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({}), // No need for poll_id since we're clearing all
-              }
+              },
             );
 
             if (response.error) {
@@ -495,7 +668,7 @@
             showMessage(
               `Failed to end poll: ${error.message}`,
               "error",
-              pollForm
+              pollForm,
             );
             console.error("End poll error:", error);
           }
@@ -541,7 +714,7 @@
             showMessage(
               "Headline updated successfully!",
               "success",
-              updateForm
+              updateForm,
             );
           } catch (error) {
             showMessage("Failed to update headline", "error", updateForm);
@@ -564,7 +737,7 @@
             showMessage(
               "Please provide a question and at least 2 options",
               "error",
-              pollForm
+              pollForm,
             );
             return;
           }
@@ -581,7 +754,7 @@
                   question: question,
                   options: options,
                 }),
-              }
+              },
             );
 
             if (response.error) {
@@ -596,7 +769,7 @@
             showMessage(
               `Failed to create poll: ${error.message}`,
               "error",
-              pollForm
+              pollForm,
             );
             console.error("Poll creation error:", error);
           }
@@ -623,7 +796,7 @@
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ new_password: newPassword }),
-              }
+              },
             );
 
             // Clear the form
@@ -637,7 +810,7 @@
           } catch (error) {
             showPasswordStatus(
               `Failed to update password: ${error.message}`,
-              "error"
+              "error",
             );
             console.error("Password update error:", error);
           }
@@ -660,7 +833,7 @@
           showMessage(
             "Status refreshed",
             "success",
-            document.querySelector(".card:first-child")
+            document.querySelector(".card:first-child"),
           );
         });
 
@@ -668,11 +841,7 @@
         clearChatBtn.addEventListener("click", async (e) => {
           e.preventDefault();
 
-          if (
-            !confirm(
-              "Sure!"
-            )
-          ) {
+          if (!confirm("Sure!")) {
             return;
           }
 
@@ -684,21 +853,117 @@
                 headers: {
                   "Content-Type": "application/json",
                 },
-              }
+              },
             );
 
             showChatStatus(
               "All chat messages cleared successfully!",
-              "success"
+              "success",
             );
           } catch (error) {
-            showChatStatus(
-              `Failed to clear chat: ${error.message}`,
-              "error"
-            );
+            showChatStatus(`Failed to clear chat: ${error.message}`, "error");
             console.error("Clear chat error:", error);
           }
         });
+
+        // Visitor Tracking Functions
+        async function loadVisitorStats() {
+          try {
+            const response = await fetch(`${API_BASE}/api/visitors/stats`);
+            const data = await response.json();
+
+            document.getElementById("visitor-total").textContent =
+              data.total_visitors || 0;
+            document.getElementById("visitor-today").textContent =
+              data.today_visitors || 0;
+            document.getElementById("visitor-active").textContent =
+              data.active_now || 0;
+          } catch (error) {
+            console.error("Error loading visitor stats:", error);
+          }
+        }
+
+        async function loadRecentVisitors() {
+          try {
+            const response = await fetch(
+              `${API_BASE}/api/visitors/list?limit=10`,
+            );
+            const data = await response.json();
+
+            const container = document.getElementById("visitors-container");
+
+            if (data.visitors && data.visitors.length > 0) {
+              container.innerHTML = data.visitors
+                .map((visitor) => {
+                  const deviceType = visitor.device_type || "Desktop";
+                  const badgeClass =
+                    deviceType.toLowerCase() === "mobile"
+                      ? "badge-mobile"
+                      : deviceType.toLowerCase() === "tablet"
+                        ? "badge-tablet"
+                        : "badge-desktop";
+
+                  return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; border-bottom: 1px solid #444; font-size: 0.85rem;">
+                                <div>
+                                    <span style="font-family: monospace;">${visitor.ip_address || "Unknown"}</span>
+                                    <span class="visitor-badge ${badgeClass}">${deviceType}</span>
+                                    ${visitor.visit_count > 1 ? `<span style="margin-left: 5px; color: #888; font-size: 0.7rem;">(${visitor.visit_count}x)</span>` : ""}
+                                </div>
+                                <div style="color: #888; font-size: 0.75rem;">
+                                    ${formatTimeAgo(visitor.last_seen)}
+                                </div>
+                            </div>
+                        `;
+                })
+                .join("");
+            } else {
+              container.innerHTML =
+                '<div style="text-align: center; color: #888; padding: 10px;">No visitors yet from Netlify</div>';
+            }
+          } catch (error) {
+            console.error("Error loading visitors:", error);
+            document.getElementById("visitors-container").innerHTML =
+              '<div style="text-align: center; color: var(--error-color); padding: 10px;">Error loading visitors</div>';
+          }
+        }
+
+        function formatTimeAgo(timestamp) {
+          if (!timestamp) return "Unknown";
+
+          const date = new Date(timestamp);
+          const now = new Date();
+          const diffSeconds = Math.floor((now - date) / 1000);
+
+          if (diffSeconds < 60) return "Just now";
+          if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+          if (diffSeconds < 86400)
+            return `${Math.floor(diffSeconds / 3600)}h ago`;
+          return date.toLocaleDateString();
+        }
+
+        // Toggle visitors list
+        const toggleBtn = document.getElementById("toggle-visitors");
+        const visitorsList = document.getElementById("visitors-list");
+        let isVisible = false;
+
+        if (toggleBtn) {
+          toggleBtn.addEventListener("click", () => {
+            isVisible = !isVisible;
+            visitorsList.style.display = isVisible ? "block" : "none";
+            toggleBtn.textContent = isVisible ? "Hide ▲" : "Show ▼";
+
+            if (isVisible) {
+              loadRecentVisitors();
+            }
+          });
+        }
+
+        // Load visitor stats on page load
+        loadVisitorStats();
+
+        // Auto-refresh visitor stats every 10 seconds
+        setInterval(loadVisitorStats, 10000);
 
         // Initialize the page
         initialize();

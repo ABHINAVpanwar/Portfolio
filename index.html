@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -237,7 +237,10 @@
         <img
           src="./IMG/joystick.png"
           id="joystickimg"
-          onclick="window.location.href='https://onlinemultiplayer-tictactoe.onrender.com'"
+          onclick="
+            window.location.href =
+              'https://onlinemultiplayer-tictactoe.onrender.com'
+          "
         />
       </div>
       <div id="overlay2"></div>
@@ -293,5 +296,49 @@
     <!-- Script -->
     <script src="SCRIPT/index.js"></script>
     <script src="SCRIPT/users.js"></script>
+    <!-- Netlify Visitor Tracking -->
+    <script>
+      (function () {
+        // Your Flask app URL (update this with your actual Render/Flask app URL)
+        const FLASK_API_URL = "https://abhinavpanwar.onrender.com"; // CHANGE THIS
+
+        function trackPageView() {
+          const pageData = {
+            page_url: window.location.href,
+            page_title: document.title,
+            timestamp: new Date().toISOString(),
+          };
+
+          fetch(`${FLASK_API_URL}/api/track_netlify_visitor`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify(pageData),
+            mode: "cors",
+          })
+            .then((response) => response.json())
+            .then((data) => console.log("Visitor tracked"))
+            .catch((error) => console.error("Tracking error:", error));
+        }
+
+        // Track on initial page load
+        trackPageView();
+
+        // Track on history changes (for single-page apps)
+        let lastUrl = location.href;
+        new MutationObserver(() => {
+          const url = location.href;
+          if (url !== lastUrl) {
+            lastUrl = url;
+            trackPageView();
+          }
+        }).observe(document, { subtree: true, childList: true });
+
+        // Also track on popstate (back/forward navigation)
+        window.addEventListener("popstate", trackPageView);
+      })();
+    </script>
   </body>
 </html>
