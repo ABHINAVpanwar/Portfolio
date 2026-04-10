@@ -47,6 +47,7 @@ def get_client_ip():
     except Exception as e:
         logger.error(f"Error getting client IP: {str(e)}")
         return '0.0.0.0'
+<<<<<<< HEAD
 
 # MongoDB Configuration - FIXED connection string
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb+srv://abhinavpanwar:Abhinav1234@cluster0.vihawrj.mongodb.net/portfolio_analytics?retryWrites=true&w=majority&appName=Cluster0')
@@ -158,23 +159,145 @@ CORS(app,
              "max_age": 600
          }
      })
+=======
+>>>>>>> f5472e2db014ea10e03497b40ae4fc70b66358d8
 
+# MongoDB Configuration - FIXED connection string
+MONGO_URI = os.environ.get('MONGO_URI', 'mongodb+srv://abhinavpanwar:Abhinav1234@cluster0.vihawrj.mongodb.net/portfolio_analytics?retryWrites=true&w=majority&appName=Cluster0')
+MONGO_DB_NAME = os.environ.get('MONGO_DB_NAME', 'portfolio_analytics')
+
+# Initialize MongoDB connection
+try:
+    mongo_client = MongoClient(MONGO_URI)
+    # Test the connection
+    mongo_client.admin.command('ping')
+    db = mongo_client[MONGO_DB_NAME]
+    visitors_collection = db['visitors']
+    logger.info("✅ MongoDB connected successfully!")
+except Exception as e:
+    logger.error(f"❌ MongoDB connection failed: {str(e)}")
+    mongo_client = None
+    visitors_collection = None
+
+# Track visitor function - Only for Netlify site
+def track_visitor():
+    """Track visitor information from Netlify site in MongoDB"""
+    if visitors_collection is None:
+        logger.warning("MongoDB not available, skipping visitor tracking")
+        return
+    
+    try:
+        # Check if request is from Netlify
+        origin = request.headers.get('Origin', '')
+        referer = request.headers.get('Referer', '')
+        
+        # Only track if coming from Netlify site
+        if 'abhinavpanwar.netlify.app' not in origin and 'abhinavpanwar.netlify.app' not in referer:
+            logger.debug(f"Skipping tracking - not from Netlify: {origin}")
+            return
+        
+        ip_address = get_client_ip()
+        device_id = request.cookies.get('device_id', str(uuid.uuid4()))
+        user_agent = request.headers.get('User-Agent', 'Unknown')
+        page_url = request.headers.get('Referer', 'Unknown')
+        
+        # Parse user agent for device type
+        device_type = 'Desktop'
+        ua_lower = user_agent.lower()
+        if 'mobile' in ua_lower or 'android' in ua_lower or 'iphone' in ua_lower:
+            device_type = 'Mobile'
+        elif 'tablet' in ua_lower or 'ipad' in ua_lower:
+            device_type = 'Tablet'
+        
+        current_time = datetime.now(pytz.timezone('Asia/Kolkata'))
+        
+        # Check if visitor exists
+        existing_visitor = visitors_collection.find_one({
+            '$or': [
+                {'ip_address': ip_address},
+                {'device_id': device_id}
+            ]
+        })
+        
+        if existing_visitor:
+            # Update existing visitor
+            visitors_collection.update_one(
+                {'_id': existing_visitor['_id']},
+                {
+                    '$set': {
+                        'last_seen': current_time,
+                        'user_agent': user_agent,
+                        'last_page': page_url,
+                        'device_type': device_type
+                    },
+                    '$inc': {'visit_count': 1},
+                    '$addToSet': {'pages_visited': page_url}
+                }
+            )
+            logger.debug(f"Updated Netlify visitor: {ip_address}")
+        else:
+            # Create new visitor record
+            visitor_data = {
+                'ip_address': ip_address,
+                'device_id': device_id,
+                'first_seen': current_time,
+                'last_seen': current_time,
+                'user_agent': user_agent,
+                'device_type': device_type,
+                'last_page': page_url,
+                'pages_visited': [page_url],
+                'visit_count': 1,
+                'created_at': current_time,
+                'source': 'Netlify'
+            }
+            visitors_collection.insert_one(visitor_data)
+            logger.info(f"New Netlify visitor tracked: {ip_address}")
+            
+    except Exception as e:
+        logger.error(f"Error tracking Netlify visitor: {str(e)}")
+
+# CORS Configuration - UPDATED to include send_file endpoint
 CORS(app, resources={
-    r"/get_messages": {"origins": [
-                 "https://abhinavpanwar.netlify.app",
-                 "http://127.0.0.1:5501",
-                 "http://localhost:5501"
-             ]},
-    r"/send_message": {"origins": [
-                 "https://abhinavpanwar.netlify.app",
-                 "http://127.0.0.1:5501",
-                 "http://localhost:5501"
-             ]},
-    r"/get_password": {"origins": [
-                 "https://abhinavpanwar.netlify.app",
-                 "http://127.0.0.1:5501",
-                 "http://localhost:5501"
-             ]}
+    r"/api/*": {
+        "origins": [
+            "https://abhinavpanwar.netlify.app",
+            "http://127.0.0.1:5501",
+            "http://localhost:5501"
+        ],
+        "supports_credentials": True,
+        "allow_headers": ["Content-Type"],
+        "methods": ["GET", "POST", "OPTIONS", "HEAD"],
+        "expose_headers": ["Content-Type"],
+        "max_age": 600
+    },
+    r"/send_message": {
+        "origins": [
+            "https://abhinavpanwar.netlify.app",
+            "http://127.0.0.1:5501",
+            "http://localhost:5501"
+        ]
+    },
+    r"/send_file": {  # ADD THIS
+        "origins": [
+            "https://abhinavpanwar.netlify.app",
+            "http://127.0.0.1:5501",
+            "http://localhost:5501"
+        ]
+    },
+    r"/get_messages": {
+        "origins": [
+            "https://abhinavpanwar.netlify.app",
+            "http://127.0.0.1:5501",
+            "http://localhost:5501"
+        ]
+    },
+    r"/get_password": {
+        "origins": [
+            "https://abhinavpanwar.netlify.app",
+            "http://127.0.0.1:5501",
+            "http://localhost:5501"
+        ]
+    }
 })
 
 app.config.update(
@@ -538,6 +661,45 @@ def send_message():
         return jsonify({'status': 'Message received', 'message': data})
     
     return jsonify({'status': 'error', 'message': 'Invalid data'}), 400
+
+# Add these endpoints to your Flask server code
+
+@app.route('/send_file', methods=['POST'])
+def send_file():
+    """Endpoint to receive and store file messages"""
+    try:
+        data = request.json
+        sender = data.get('sender')
+        file_name = data.get('name')
+        file_data = data.get('data')  # base64 encoded
+        file_type = data.get('type')
+        file_size = data.get('size')
+        current_time = datetime.now(pytz.timezone('Asia/Kolkata')).strftime("%d-%m-%Y %I:%M %p")
+        
+        if sender and file_data:
+            # Store file message with download link
+            file_message = {
+                'sender': sender,
+                'fileName': file_name,
+                'fileData': file_data,
+                'fileType': file_type,
+                'fileSize': file_size,
+                'time': current_time,
+                'isFile': True
+            }
+            messages.append(file_message)
+            
+            # Optional: Limit stored messages to last 200 to save memory
+            if len(messages) > 200:
+                messages.pop(0)
+                
+            logger.info(f"File received from {sender}: {file_name}")
+            return jsonify({'status': 'File received', 'file': file_name})
+        
+        return jsonify({'status': 'error', 'message': 'Invalid file data'}), 400
+    except Exception as e:
+        logger.error(f"Error sending file: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/get_messages', methods=['GET'])
 def get_messages():
