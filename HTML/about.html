@@ -454,9 +454,6 @@
         meme7: "../SOUND/memes/among-us.mp3",
       };
 
-<<<<<<< HEAD
-      // Keep all your existing authentication functions...
-=======
       // Helper function to escape HTML
       function escapeHtml(text) {
         if (!text) return "";
@@ -540,7 +537,6 @@
         });
 
       // ============ AUTHENTICATION ============
->>>>>>> f5472e2db014ea10e03497b40ae4fc70b66358d8
       async function fetchPassword() {
         try {
           const response = await fetch(
@@ -590,27 +586,53 @@
           chatbox.style.display = "none";
         } else {
           chatbox.style.display = "flex";
-<<<<<<< HEAD
-          icon.style.background = "";
-        }
-      }
-
-      document
-        .getElementById("message")
-        .addEventListener("keypress", function (event) {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            sendMessage();
-          }
-        });
-
-=======
           if (icon) icon.style.background = "";
         }
       }
 
+      function viewImage(imageData, fileName) {
+        // Create a modal for better image viewing
+        const modal = document.createElement("div");
+        modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  `;
+
+        const img = document.createElement("img");
+        img.src = imageData;
+        img.style.cssText = `
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    border-radius: 8px;
+  `;
+
+        modal.appendChild(img);
+        document.body.appendChild(modal);
+
+        // Close modal on click
+        modal.onclick = function () {
+          modal.remove();
+        };
+
+        // Close with Escape key
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape" && document.body.contains(modal)) {
+            modal.remove();
+          }
+        });
+      }
+
       // ============ SEND TEXT MESSAGE ============
->>>>>>> f5472e2db014ea10e03497b40ae4fc70b66358d8
       async function sendMessage() {
         if (!isAuthenticated) {
           alert("PLEASE LOGIN FIRST !!");
@@ -647,15 +669,6 @@
 
           const data = await response.json();
           const messagesDiv = document.getElementById("messages");
-<<<<<<< HEAD
-          messagesDiv.innerHTML = data
-            .map(
-              (msg) =>
-                `<div class="message"><strong>${msg.sender}:</strong> ${msg.message} <span style="color: #888; font-size: 10px;">${msg.time}</span></div>`
-            )
-            .join("");
-=======
->>>>>>> f5472e2db014ea10e03497b40ae4fc70b66358d8
 
           messagesDiv.innerHTML = data
             .map((msg) => {
@@ -675,15 +688,15 @@
                 // For images, show preview
                 if (fileType.startsWith("image/")) {
                   return `<div class="message file-message" style="background: #e8f5e9; padding: 8px 12px; border-radius: 10px; margin: 5px 0;">
-                  <strong>${escapeHtml(msg.sender)}:</strong>
-                  <div>
-                    <a href="${fileData}" download="${fileName}" target="_blank">${fileIcon} ${escapeHtml(fileName)}</a>
-                    <div style="margin-top: 5px;">
-                      <img src="${fileData}" alt="${escapeHtml(fileName)}" style="max-width: 150px; max-height: 120px; border-radius: 8px; cursor: pointer;" onclick="window.open('${fileData}', '_blank')">
-                    </div>
-                  </div>
-                  <span style="color: #888; font-size: 10px;">${msg.time || ""}</span>
-                </div>`;
+  <strong>${escapeHtml(msg.sender)}:</strong>
+  <div>
+    <a href="${fileData}" download="${fileName}" target="_blank">${fileIcon} ${escapeHtml(fileName)}</a>
+    <div style="margin-top: 5px;">
+      <img src="${fileData}" alt="${escapeHtml(fileName)}" style="max-width: 150px; max-height: 120px; border-radius: 8px; cursor: pointer;" onclick="viewImage('${fileData}', '${escapeHtml(fileName)}')">
+    </div>
+  </div>
+  <span style="color: #888; font-size: 10px;">${msg.time || ""}</span>
+</div>`;
                 }
 
                 // For other files
@@ -724,11 +737,7 @@
         }
       }
 
-<<<<<<< HEAD
-      // SIMPLIFIED YouTube URL detection and playback
-=======
       // ============ SOUND & YOUTUBE ============
->>>>>>> f5472e2db014ea10e03497b40ae4fc70b66358d8
       function extractYouTubeUrl(message) {
         const youtubeRegex =
           /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([\w\-]{11})/i;
@@ -768,10 +777,6 @@
         }
       }
 
-<<<<<<< HEAD
-      // Simple YouTube audio playback (no UI needed)
-=======
->>>>>>> f5472e2db014ea10e03497b40ae4fc70b66358d8
       function playYouTubeAudio(videoId) {
         const iframe = document.createElement("iframe");
         iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0`;
@@ -809,10 +814,6 @@
         if (icon) icon.style.background = "#4caf50";
       }
 
-<<<<<<< HEAD
-      // Initialize
-      setInterval(loadMessages, 2000);
-=======
       // ============ EVENT LISTENERS ============
       document
         .getElementById("message")
@@ -825,7 +826,6 @@
 
       // Initialize
       setInterval(loadMessages, 2500);
->>>>>>> f5472e2db014ea10e03497b40ae4fc70b66358d8
       loadMessages();
 
       const chatIcon = document.getElementById("chat-icon");
