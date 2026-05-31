@@ -236,31 +236,50 @@
     </div>
     <div id="SH">
       <div class="skill-bar">
-        <div class="skill-name">Focus</div>
-        <div class="bar-container">
+        <div class="skill-row">
+          <span class="skill-name">Focus</span>
+          <span class="skill-pct" id="pct-F">80%</span>
+        </div>
+        <div class="bar-container" data-skill="F">
           <div class="bar" id="F"></div>
         </div>
-        <div class="skill-name">Stress Management</div>
-        <div class="bar-container">
+        <div class="skill-row">
+          <span class="skill-name">Stress Management</span>
+          <span class="skill-pct" id="pct-SM">60%</span>
+        </div>
+        <div class="bar-container" data-skill="SM">
           <div class="bar" id="SM"></div>
         </div>
-        <div class="skill-name">Time Management</div>
-        <div class="bar-container">
+        <div class="skill-row">
+          <span class="skill-name">Time Management</span>
+          <span class="skill-pct" id="pct-TM">70%</span>
+        </div>
+        <div class="bar-container" data-skill="TM">
           <div class="bar" id="TM"></div>
         </div>
-        <div class="skill-name">Problem Solving</div>
-        <div class="bar-container">
+        <div class="skill-row">
+          <span class="skill-name">Problem Solving</span>
+          <span class="skill-pct" id="pct-PS">80%</span>
+        </div>
+        <div class="bar-container" data-skill="PS">
           <div class="bar" id="PS"></div>
         </div>
-        <div class="skill-name">Decision Making</div>
-        <div class="bar-container">
+        <div class="skill-row">
+          <span class="skill-name">Decision Making</span>
+          <span class="skill-pct" id="pct-DM">60%</span>
+        </div>
+        <div class="bar-container" data-skill="DM">
           <div class="bar" id="DM"></div>
         </div>
-        <div class="skill-name">Confidence</div>
-        <div class="bar-container">
+        <div class="skill-row">
+          <span class="skill-name">Confidence</span>
+          <span class="skill-pct" id="pct-C">70%</span>
+        </div>
+        <div class="bar-container" data-skill="C">
           <div class="bar" id="C"></div>
         </div>
       </div>
+      <div id="scores-hint">drag bars to rate &nbsp;&bull;&nbsp; last changed: <span id="scores-time">—</span></div>
     </div>
     <div id="B1">
       <button id="experience" class="btn" onclick="f1()">My Experiences</button>
@@ -351,6 +370,405 @@
       />
       <button type="button" onclick="validateLogin()">Login</button>
     </div>
+    <!-- Music Vote Widget -->
+    <div id="music-btn" onclick="toggleMusicPanel()">
+      <div class="music-bars">
+        <span class="music-bar b1"></span>
+        <span class="music-bar b2"></span>
+        <span class="music-bar b3"></span>
+        <span class="music-bar b4"></span>
+      </div>
+    </div>
+
+    <div id="music-panel">
+      <div id="music-panel-header">
+        <div id="now-playing-wrap">
+          <div class="mini-bars">
+            <span class="mbar mb1"></span>
+            <span class="mbar mb2"></span>
+            <span class="mbar mb3"></span>
+          </div>
+          <div id="now-playing-text">No songs yet</div>
+        </div>
+        <span id="music-close" onclick="toggleMusicPanel()">&#x2715;</span>
+      </div>
+      <div id="music-list"></div>
+    </div>
+
+    <style>
+      #music-btn {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        width: 46px;
+        height: 46px;
+        background: #4caf50;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(76,175,80,0.5);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      #music-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 18px rgba(76,175,80,0.7);
+      }
+      .music-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 22px;
+      }
+      .music-bar {
+        width: 4px;
+        background: white;
+        border-radius: 2px;
+        animation: bounce 1s ease-in-out infinite;
+        animation-play-state: paused;
+      }
+      #music-btn.playing-active .music-bar {
+        animation-play-state: running;
+      }
+      .b1 { height: 10px; animation-delay: 0s; }
+      .b2 { height: 18px; animation-delay: 0.15s; }
+      .b3 { height: 14px; animation-delay: 0.3s; }
+      .b4 { height: 8px;  animation-delay: 0.45s; }
+      @keyframes bounce {
+        0%, 100% { transform: scaleY(1); }
+        50%       { transform: scaleY(1.8); }
+      }
+      #music-panel {
+        position: fixed;
+        bottom: 80px;
+        left: 20px;
+        width: 300px;
+        background: #1a1a1a;
+        border-radius: 14px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+        z-index: 1000;
+        overflow: hidden;
+        display: none;
+        flex-direction: column;
+        animation: slideUp 0.25s ease;
+        border: 1px solid rgba(76,175,80,0.25);
+      }
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      #music-panel-header {
+        background: #4caf50;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      #now-playing-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        overflow: hidden;
+      }
+      .mini-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+      .mbar {
+        width: 3px;
+        background: white;
+        border-radius: 2px;
+        animation: bounce 0.9s ease-in-out infinite;
+      }
+      .mb1 { height: 8px;  animation-delay: 0s; }
+      .mb2 { height: 14px; animation-delay: 0.2s; }
+      .mb3 { height: 6px;  animation-delay: 0.4s; }
+      #now-playing-text {
+        font-family: 'Poppins', sans-serif;
+        font-size: 12px;
+        color: white;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+      }
+      #music-close {
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        flex-shrink: 0;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+      }
+      #music-close:hover { opacity: 1; }
+      #music-list {
+        max-height: 280px;
+        overflow-y: auto;
+        padding: 8px 0;
+      }
+      #music-list::-webkit-scrollbar { width: 4px; }
+      #music-list::-webkit-scrollbar-track { background: #111; }
+      #music-list::-webkit-scrollbar-thumb { background: #4caf50; border-radius: 2px; }
+      .music-item {
+        display: flex;
+        align-items: center;
+        padding: 9px 14px;
+        gap: 10px;
+        cursor: pointer;
+        transition: background 0.15s;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+      }
+      .music-item:hover { background: rgba(76,175,80,0.1); }
+      .music-item.playing { background: rgba(76,175,80,0.18); }
+      .song-wave {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 18px;
+        width: 20px;
+        flex-shrink: 0;
+      }
+      .song-wave span {
+        width: 3px;
+        background: #4caf50;
+        border-radius: 2px;
+        animation: bounce 0.8s ease-in-out infinite;
+      }
+      .song-wave span:nth-child(1) { height: 8px;  animation-delay: 0s; }
+      .song-wave span:nth-child(2) { height: 16px; animation-delay: 0.15s; }
+      .song-wave span:nth-child(3) { height: 10px; animation-delay: 0.3s; }
+      .song-wave.paused span { animation-play-state: paused; }
+      .song-info { flex: 1; overflow: hidden; }
+      .song-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 12px;
+        color: #fff;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .song-artist {
+        font-family: 'Poppins', sans-serif;
+        font-size: 10px;
+        color: #888;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .vote-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1px;
+        flex-shrink: 0;
+        background: none;
+        border: 1px solid rgba(76,175,80,0.4);
+        border-radius: 8px;
+        padding: 4px 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .vote-btn:hover { background: rgba(76,175,80,0.2); border-color: #4caf50; }
+      .vote-btn.voted { background: rgba(76,175,80,0.3); border-color: #4caf50; }
+      .vote-arrow {
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-bottom: 7px solid #4caf50;
+      }
+      .vote-count {
+        font-family: 'Poppins', sans-serif;
+        font-size: 10px;
+        color: #4caf50;
+        font-weight: 700;
+      }
+      .music-empty {
+        text-align: center;
+        color: #555;
+        font-family: 'Poppins', sans-serif;
+        font-size: 12px;
+        padding: 30px 14px;
+      }
+    </style>
+
+    <script>
+      (function () {
+        const API = 'https://abhinavpanwar.onrender.com';
+        let songs = [];
+        let currentIdx = -1;   // -1 = nothing playing
+        let isPlaying = false;
+        let panelOpen = false;
+        let votedIds = JSON.parse(localStorage.getItem('mv_voted') || '[]');
+        let playerIframe = null;
+
+        // ── panel toggle ──────────────────────────────────────────
+        function toggleMusicPanel() {
+          panelOpen = !panelOpen;
+          const panel = document.getElementById('music-panel');
+          panel.style.display = panelOpen ? 'flex' : 'none';
+          if (panelOpen) loadSongs();
+        }
+        window.toggleMusicPanel = toggleMusicPanel;
+        window.closeMusicPanel = function () {
+          panelOpen = false;
+          document.getElementById('music-panel').style.display = 'none';
+        };
+
+        // ── load songs from API ───────────────────────────────────
+        async function loadSongs() {
+          try {
+            const res = await fetch(`${API}/api/songs`, { cache: 'no-store' });
+            const data = await res.json();
+            const playingId = songs[currentIdx]?.id;
+            songs = (data.songs || []).sort((a, b) => b.votes - a.votes);
+            if (playingId) {
+              const newIdx = songs.findIndex(s => s.id === playingId);
+              currentIdx = newIdx !== -1 ? newIdx : currentIdx;
+            }
+            renderList();
+            if (!isPlaying && songs.length) updateNowPlaying(songs[0]);
+          } catch (e) {
+            document.getElementById('music-list').innerHTML = '<div class="music-empty">Could not load songs</div>';
+          }
+        }
+
+        // ── render song list ──────────────────────────────────────
+        function renderList() {
+          const list = document.getElementById('music-list');
+          if (!songs.length) {
+            list.innerHTML = '<div class="music-empty">No songs added yet</div>';
+            return;
+          }
+          list.innerHTML = songs.map((s, i) => {
+            const voted     = votedIds.includes(s.id);
+            const active    = i === currentIdx;
+            const waveClass = active && isPlaying ? '' : ' paused';
+            return `
+              <div class="music-item${active ? ' playing' : ''}" onclick="playSong(${i})">
+                <div class="song-wave${waveClass}">
+                  <span></span><span></span><span></span>
+                </div>
+                <div class="song-info">
+                  <div class="song-title">${s.title}</div>
+                  <div class="song-artist">${s.artist || 'Unknown'}</div>
+                </div>
+                <button class="vote-btn${voted ? ' voted' : ''}" onclick="event.stopPropagation(); voteSong('${s.id}', this)">
+                  <div class="vote-arrow"></div>
+                  <span class="vote-count">${s.votes}</span>
+                </button>
+              </div>`;
+          }).join('');
+        }
+
+        // ── now-playing header text ───────────────────────────────
+        function updateNowPlaying(song) {
+          document.getElementById('now-playing-text').textContent =
+            song ? `${song.title}${song.artist ? ' · ' + song.artist : ''}` : 'No songs yet';
+        }
+
+        // ── set playing state on button ───────────────────────────
+        function setPlayingState(playing) {
+          isPlaying = playing;
+          const btn = document.getElementById('music-btn');
+          if (playing) btn.classList.add('playing-active');
+          else btn.classList.remove('playing-active');
+          renderList();
+        }
+
+        // ── play / pause toggle ───────────────────────────────────
+        window.playSong = function (idx) {
+          // clicking the currently playing song → pause it
+          if (idx === currentIdx && isPlaying) {
+            if (playerIframe) playerIframe.remove();
+            playerIframe = null;
+            setPlayingState(false);
+            return;
+          }
+          currentIdx = idx;
+          const song = songs[idx];
+          if (!song) return;
+          updateNowPlaying(song);
+          if (playerIframe) playerIframe.remove();
+          playerIframe = document.createElement('iframe');
+          playerIframe.src = `https://www.youtube.com/embed/${song.youtube_id}?autoplay=1&mute=0&controls=0&rel=0&enablejsapi=1`;
+          playerIframe.width = '0';
+          playerIframe.height = '0';
+          playerIframe.style.display = 'none';
+          playerIframe.allow = 'autoplay';
+          // auto-advance to next song when this one ends
+          playerIframe.addEventListener('load', () => {
+            clearTimeout(window._songTimer);
+            // YouTube embeds don't fire ended events easily without API;
+            // use a generous 7-min fallback to advance
+            window._songTimer = setTimeout(() => autoNext(), 7 * 60 * 1000);
+          });
+          document.body.appendChild(playerIframe);
+          setPlayingState(true);
+        };
+
+        // ── auto-advance to next song ─────────────────────────────
+        function autoNext() {
+          if (!songs.length) return;
+          const nextIdx = (currentIdx + 1) % songs.length;
+          window.playSong(nextIdx);
+          // open panel briefly to show what's playing
+          if (!panelOpen) {
+            panelOpen = true;
+            document.getElementById('music-panel').style.display = 'flex';
+            setTimeout(() => { if (panelOpen) window.closeMusicPanel(); }, 4000);
+          }
+        }
+
+        // ── vote ──────────────────────────────────────────────────
+        window.voteSong = async function (id, btn) {
+          if (votedIds.includes(id)) return;
+          try {
+            const res = await fetch(`${API}/api/songs/vote`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id })
+            });
+            const data = await res.json();
+            votedIds.push(id);
+            localStorage.setItem('mv_voted', JSON.stringify(votedIds));
+            btn.classList.add('voted');
+            btn.querySelector('.vote-count').textContent = data.votes;
+            const song = songs.find(s => s.id === id);
+            if (song) song.votes = data.votes;
+            const playingId = songs[currentIdx]?.id;
+            songs.sort((a, b) => b.votes - a.votes);
+            // keep currentIdx pointing to the same song after re-sort
+            if (playingId) currentIdx = songs.findIndex(s => s.id === playingId);
+            renderList();
+          } catch (e) { console.error('Vote failed', e); }
+        };
+
+        // ── init: load songs silently on page load ────────────────
+        (async function init() {
+          try {
+            const res = await fetch(`${API}/api/songs`, { cache: 'no-store' });
+            const data = await res.json();
+            songs = data.songs || [];
+            if (songs.length) {
+              updateNowPlaying(songs[0]);
+              window.playSong(0);
+            }
+          } catch (e) {}
+        })();
+
+        // refresh list every 15s only when panel is open
+        setInterval(() => { if (panelOpen) loadSongs(); }, 15000);
+      })();
+    </script>
+
     <div id="chat-icon" onclick="toggleChat()">💬</div>
     <div id="chat-container">
       <div id="chat-header" onclick="toggleChat()">Chat</div>
@@ -436,12 +854,59 @@
       .file-message a:hover {
         text-decoration: underline;
       }
+
+      .code-bubble {
+        position: relative;
+        background: #1e1e1e;
+        border-radius: 6px;
+        margin: 5px 0 3px;
+        padding: 8px 10px;
+        border-left: 3px solid #4caf50;
+      }
+      .code-preview {
+        margin: 0;
+        font-family: monospace;
+        font-size: 11px;
+        color: #ccc;
+        white-space: pre-wrap;
+        word-break: break-all;
+        line-height: 1.5;
+      }
+      .copy-btn {
+        margin-top: 6px;
+        padding: 3px 10px;
+        font-size: 11px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .copy-btn:hover { background: #388e3c; }
     </style>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
       let lastMessageCount = 0;
       let isAuthenticated = false;
       let username = "";
+      let pollInterval = null;
+
+      // ============ USER LOGGING ============
+      async function logEvent(payload) {
+        try {
+          await fetch("https://abhinavpanwar.onrender.com/api/log", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ page: "about.html", ...payload }),
+          });
+        } catch (e) {
+          console.warn("Log failed:", e);
+        }
+      }
+
+      // Log site visit on page load
+      logEvent({ event: "site_visit" });
 
       // Meme sound mapping
       const memeSounds = {
@@ -478,9 +943,9 @@
           const file = e.target.files[0];
           if (!file) return;
 
-          // Check file size (max 50MB)
-          if (file.size > 50 * 1024 * 1024) {
-            alert("File too large! Maximum 50MB allowed.");
+          // Check file size (max 100MB)
+          if (file.size > 100 * 1024 * 1024) {
+            alert("File too large! Maximum 100MB allowed.");
             return;
           }
 
@@ -513,6 +978,7 @@
               );
 
               if (response.ok) {
+                logEvent({ event: "file_send", username, file_name: file.name, file_type: file.type, file_size: file.size });
                 loadMessages(); // Refresh messages
               } else {
                 alert("Failed to send file");
@@ -568,9 +1034,12 @@
             document.getElementById("loginDiv").style.display = "none";
             document.getElementById("name").value = username;
             document.getElementById("chat-container").style.display = "flex";
-            loadMessages(); // Load messages after login
+            logEvent({ event: "login", username });
+            loadMessages();
+            if (!pollInterval) pollInterval = setInterval(loadMessages, 2500);
           } else {
             alert("INVALID PASSWORD");
+            logEvent({ event: "login_failed", username });
           }
         });
       }
@@ -582,11 +1051,15 @@
         }
         const chatbox = document.getElementById("chat-container");
         const icon = document.getElementById("chat-icon");
+        const musicBtn = document.getElementById("music-btn");
         if (chatbox.style.display === "flex") {
           chatbox.style.display = "none";
+          if (musicBtn) musicBtn.style.display = "flex";
         } else {
           chatbox.style.display = "flex";
           if (icon) icon.style.background = "";
+          if (musicBtn) musicBtn.style.display = "none";
+          if (window.closeMusicPanel) window.closeMusicPanel();
         }
       }
 
@@ -632,27 +1105,31 @@
         });
       }
 
-      // ============ SEND TEXT MESSAGE ============
       async function sendMessage() {
-        if (!isAuthenticated) {
+        if (!isAuthenticated || !username) {
           alert("PLEASE LOGIN FIRST !!");
           return;
         }
 
-        const message = document.getElementById("message").value.trim();
+        const msgInput = document.getElementById("message");
+        const message = msgInput.value.trim();
+        if (!message) return;
 
-        if (message) {
-          try {
-            await fetch("https://abhinavpanwar.onrender.com/send_message", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ sender: username, message: message }),
-            });
-            document.getElementById("message").value = "";
-            loadMessages();
-          } catch (error) {
-            console.error("Error sending message:", error);
-          }
+        const sendBtn = document.getElementById("send-btn");
+        sendBtn.disabled = true;
+        try {
+          await fetch("https://abhinavpanwar.onrender.com/send_message", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sender: username, message }),
+          });
+          logEvent({ event: "message", username, message });
+          msgInput.value = "";
+          loadMessages();
+        } catch (error) {
+          console.error("Error sending message:", error);
+        } finally {
+          sendBtn.disabled = false;
         }
       }
 
@@ -663,68 +1140,80 @@
             "https://abhinavpanwar.onrender.com/get_messages",
           );
 
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
+          if (!response.ok) throw new Error("Network response was not ok");
 
           const data = await response.json();
           const messagesDiv = document.getElementById("messages");
 
-          messagesDiv.innerHTML = data
-            .map((msg) => {
-              // Check if it's a file message
-              if (msg.isFile || msg.fileData) {
-                const fileData = msg.fileData || msg.data;
-                const fileName = msg.fileName || msg.name;
-                const fileType = msg.fileType || msg.type || "";
+          messagesDiv.innerHTML = '';
 
-                // Choose icon based on file type
-                let fileIcon = "📎";
-                if (fileType.startsWith("image/")) fileIcon = "🖼️";
-                else if (fileType.startsWith("video/")) fileIcon = "🎥";
-                else if (fileType.startsWith("audio/")) fileIcon = "🎵";
-                else if (fileType.includes("pdf")) fileIcon = "📄";
+          data.forEach((msg) => {
+            if (msg.isFile || msg.fileData) {
+              const fileData = msg.fileData || msg.data;
+              const fileName = msg.fileName || msg.name;
+              const fileType = msg.fileType || msg.type || "";
+              let fileIcon = "📎";
+              if (fileType.startsWith("image/")) fileIcon = "🖼️";
+              else if (fileType.startsWith("video/")) fileIcon = "🎥";
+              else if (fileType.startsWith("audio/")) fileIcon = "🎵";
+              else if (fileType.includes("pdf")) fileIcon = "📄";
 
-                // For images, show preview
-                if (fileType.startsWith("image/")) {
-                  return `<div class="message file-message" style="background: #e8f5e9; padding: 8px 12px; border-radius: 10px; margin: 5px 0;">
+              const wrapper = document.createElement('div');
+              if (fileType.startsWith("image/")) {
+                wrapper.innerHTML = `<div class="message file-message" style="background:#e8f5e9;padding:8px 12px;border-radius:10px;margin:5px 0;">
   <strong>${escapeHtml(msg.sender)}:</strong>
   <div>
     <a href="${fileData}" download="${fileName}" target="_blank">${fileIcon} ${escapeHtml(fileName)}</a>
-    <div style="margin-top: 5px;">
-      <img src="${fileData}" alt="${escapeHtml(fileName)}" style="max-width: 150px; max-height: 120px; border-radius: 8px; cursor: pointer;" onclick="viewImage('${fileData}', '${escapeHtml(fileName)}')">
-    </div>
+    <div style="margin-top:5px;"><img src="${fileData}" alt="${escapeHtml(fileName)}" style="max-width:150px;max-height:120px;border-radius:8px;cursor:pointer;" onclick="viewImage('${fileData}','${escapeHtml(fileName)}')"></div>
   </div>
-  <span style="color: #888; font-size: 10px;">${msg.time || ""}</span>
+  <span style="color:#888;font-size:10px;">${msg.time || ""}</span>
 </div>`;
-                }
-
-                // For other files
-                return `<div class="message file-message" style="background: #e8f5e9; padding: 8px 12px; border-radius: 10px; margin: 5px 0; display: flex; align-items: center; gap: 10px;">
-                <strong>${escapeHtml(msg.sender)}:</strong>
-                <a href="${fileData}" download="${fileName}" target="_blank">${fileIcon} ${escapeHtml(fileName)}</a>
-                <span style="color: #888; font-size: 10px;">${msg.time || ""}</span>
-              </div>`;
+              } else {
+                wrapper.innerHTML = `<div class="message file-message" style="background:#e8f5e9;padding:8px 12px;border-radius:10px;margin:5px 0;display:flex;align-items:center;gap:10px;">
+  <strong>${escapeHtml(msg.sender)}:</strong>
+  <a href="${fileData}" download="${fileName}" target="_blank">${fileIcon} ${escapeHtml(fileName)}</a>
+  <span style="color:#888;font-size:10px;">${msg.time || ""}</span>
+</div>`;
               }
+              messagesDiv.appendChild(wrapper.firstElementChild);
+              return;
+            }
 
-              // Regular text message
-              return `<div class="message" style="background: white; padding: 8px 12px; margin: 5px 0; border-radius: 10px;">
-              <strong>${escapeHtml(msg.sender)}:</strong> ${escapeHtml(msg.message)} 
-              <span style="color: #888; font-size: 10px;">${msg.time || ""}</span>
-            </div>`;
-            })
-            .join("");
+            const raw = msg.message || '';
+            const isCode = /[{};()=>]|\bfunction\b|\bconst\b|\blet\b|\bvar\b|\bdef\b|\bimport\b|\bclass\b|\breturn\b/.test(raw) && raw.length > 30;
 
-          // Auto-scroll to bottom
+            if (isCode) {
+              const preview = escapeHtml(raw.length > 80 ? raw.slice(0, 80) + '\u2026' : raw);
+              const msgDiv = document.createElement('div');
+              msgDiv.className = 'message';
+              msgDiv.style.cssText = 'background:white;padding:8px 12px;margin:5px 0;border-radius:10px;';
+              msgDiv.innerHTML = `<strong>${escapeHtml(msg.sender)}:</strong>
+                <div class="code-bubble">
+                  <pre class="code-preview">${preview}</pre>
+                  <button class="copy-btn">Copy</button>
+                </div>
+                <span style="color:#888;font-size:10px;">${msg.time || ''}</span>`;
+              msgDiv.querySelector('.copy-btn').dataset.code = raw;
+              msgDiv.querySelector('.copy-btn').addEventListener('click', function () { copyCode(this); });
+              messagesDiv.appendChild(msgDiv);
+              return;
+            }
+
+            const plain = document.createElement('div');
+            plain.innerHTML = `<div class="message" style="background:white;padding:8px 12px;margin:5px 0;border-radius:10px;">
+  <strong>${escapeHtml(msg.sender)}:</strong> ${escapeHtml(raw)}
+  <span style="color:#888;font-size:10px;">${msg.time || ""}</span>
+</div>`;
+            messagesDiv.appendChild(plain.firstElementChild);
+          });
+
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-          // Handle new message notifications
           if (data.length > lastMessageCount && data.length > 0) {
             const lastMsg = data[data.length - 1];
             if (lastMsg.message && !lastMsg.isFile && !lastMsg.fileData) {
               updateMessageIcon(lastMsg.message);
             } else {
-              // File message - just play notification
               playNotificationSound();
               const icon = document.getElementById("chat-icon");
               if (icon) icon.style.background = "red";
@@ -814,6 +1303,15 @@
         if (icon) icon.style.background = "#4caf50";
       }
 
+      function copyCode(btn) {
+        const code = btn.dataset.code || '';
+        navigator.clipboard.writeText(code).then(() => {
+          btn.textContent = 'Copied!';
+          btn.style.background = '#388e3c';
+          setTimeout(() => { btn.textContent = 'Copy'; btn.style.background = ''; }, 2000);
+        });
+      }
+
       // ============ EVENT LISTENERS ============
       document
         .getElementById("message")
@@ -825,7 +1323,6 @@
         });
 
       // Initialize
-      setInterval(loadMessages, 2500);
       loadMessages();
 
       const chatIcon = document.getElementById("chat-icon");

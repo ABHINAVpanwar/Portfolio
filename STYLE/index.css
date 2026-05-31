@@ -344,6 +344,7 @@ nav ul.active {
 
 #contactmeimg {
   z-index: 1;
+  filter: invert(100%);
   position: fixed;
   bottom: -60px; /* Initially hidden below the screen */
   height: 60px;

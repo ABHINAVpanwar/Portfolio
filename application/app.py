@@ -1,368 +1,154 @@
-from flask import Flask, request, jsonify, make_response, render_template
+from flask import Flask, request, jsonify, make_response, render_template, session, redirect, url_for
 from flask_cors import CORS
+from functools import wraps
 import uuid
 from datetime import datetime, timedelta
 import threading
 import time
 import os
-import sqlite3
-import json
 import logging
-from datetime import datetime
 import pytz
+import hashlib
 from pymongo import MongoClient
-from pymongo.errors import ConnectionFailure
-import socket
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-prod')
 
-# Configure logging
+ADMIN_USERNAME = 'Abhinav'
+ADMIN_PASSWORD_HASH = hashlib.sha256('1289#ijFK'.encode()).hexdigest()
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Helper function to get client IP
+IST = pytz.timezone('Asia/Kolkata')
+
+def now_ist():
+    return datetime.now(IST)
+
 def get_client_ip():
-    """Get the client's real IP address considering proxies"""
     try:
-        # Check for X-Forwarded-For header (when behind proxy like Render, Nginx, etc.)
         if request.headers.getlist("X-Forwarded-For"):
-            # Get the first IP in the list (client's real IP)
-            client_ip = request.headers.getlist("X-Forwarded-For")[0].split(',')[0].strip()
-        # Check for X-Real-IP header (alternative proxy header)
+            ip = request.headers.getlist("X-Forwarded-For")[0].split(',')[0].strip()
         elif request.headers.get("X-Real-IP"):
-            client_ip = request.headers.get("X-Real-IP")
-        # Check for Cloudflare
+            ip = request.headers.get("X-Real-IP")
         elif request.headers.get("CF-Connecting-IP"):
-            client_ip = request.headers.get("CF-Connecting-IP")
-        # Fall back to remote_addr
+            ip = request.headers.get("CF-Connecting-IP")
         else:
-            client_ip = request.remote_addr
-            
-        # Handle localhost/IPv6 cases
-        if client_ip == '::1' or client_ip == '127.0.0.1':
-            client_ip = '127.0.0.1'
-            
-        return client_ip or '0.0.0.0'
-        
+            ip = request.remote_addr
+        if ip in ('::1', '127.0.0.1'):
+            ip = '127.0.0.1'
+        return ip or '0.0.0.0'
     except Exception as e:
-        logger.error(f"Error getting client IP: {str(e)}")
+        logger.error(f"Error getting client IP: {e}")
         return '0.0.0.0'
-<<<<<<< HEAD
 
-# MongoDB Configuration - FIXED connection string
-MONGO_URI = os.environ.get('MONGO_URI', 'mongodb+srv://abhinavpanwar:Abhinav1234@cluster0.vihawrj.mongodb.net/portfolio_analytics?retryWrites=true&w=majority&appName=Cluster0')
+def parse_device(user_agent):
+    ua = user_agent.lower()
+    if 'mobile' in ua or 'android' in ua or 'iphone' in ua:
+        return 'Mobile'
+    elif 'tablet' in ua or 'ipad' in ua:
+        return 'Tablet'
+    return 'Desktop'
+
+# ============ MONGODB ============
+MONGO_URI     = os.environ.get('MONGO_URI', 'mongodb+srv://abhinavpanwar:Abhinav1234@cluster0.vihawrj.mongodb.net/portfolio_analytics?retryWrites=true&w=majority&appName=Cluster0')
 MONGO_DB_NAME = os.environ.get('MONGO_DB_NAME', 'portfolio_analytics')
 
-# Initialize MongoDB connection
 try:
     mongo_client = MongoClient(MONGO_URI)
-    # Test the connection
     mongo_client.admin.command('ping')
     db = mongo_client[MONGO_DB_NAME]
-    visitors_collection = db['visitors']
+
+    visitors_col  = db['visitors']
+    user_logs_col = db['user_logs']
+    headline_col  = db['headline']
+    polls_col     = db['polls']
+    responses_col = db['poll_responses']
+    messages_col  = db['messages']
+    config_col    = db['config']
+
+    # Seed headline doc if missing
+    if not headline_col.find_one({'_id': 'headline'}):
+        headline_col.insert_one({'_id': 'headline', 'text': ''})
+
+    # Seed password doc if missing
+    if not config_col.find_one({'_id': 'password'}):
+        config_col.insert_one({'_id': 'password', 'value': '!password'})
+
+    # Seed kill switch doc if missing
+    if not config_col.find_one({'_id': 'kill_switch'}):
+        config_col.insert_one({'_id': 'kill_switch', 'killed': False, 'updated_at': None})
+
+    songs_col = db['songs']
+    rating_col = db['rating']
+    scores_col = db['scores']
+
+    # Seed rating doc if missing
+    if not rating_col.find_one({'_id': 'portfolio'}):
+        rating_col.insert_one({'_id': 'portfolio', 'total': 0, 'count': 0})
+
+    # Seed scores doc if missing
+    if not scores_col.find_one({'_id': 'skills'}):
+        scores_col.insert_one({'_id': 'skills',
+            'F': 80, 'SM': 60, 'TM': 70, 'PS': 80, 'DM': 60, 'C': 70,
+            'updated_at': None})
+
     logger.info("✅ MongoDB connected successfully!")
 except Exception as e:
-    logger.error(f"❌ MongoDB connection failed: {str(e)}")
+    logger.error(f"❌ MongoDB connection failed: {e}")
     mongo_client = None
-    visitors_collection = None
+    db = visitors_col = user_logs_col = headline_col = None
+    polls_col = responses_col = messages_col = config_col = songs_col = rating_col = scores_col = None
 
-# Track visitor function - Only for Netlify site
-def track_visitor():
-    """Track visitor information from Netlify site in MongoDB"""
-    if visitors_collection is None:
-        logger.warning("MongoDB not available, skipping visitor tracking")
-        return
-    
-    try:
-        # Check if request is from Netlify
-        origin = request.headers.get('Origin', '')
-        referer = request.headers.get('Referer', '')
-        
-        # Only track if coming from Netlify site
-        if 'abhinavpanwar.netlify.app' not in origin and 'abhinavpanwar.netlify.app' not in referer:
-            logger.debug(f"Skipping tracking - not from Netlify: {origin}")
-            return
-        
-        ip_address = get_client_ip()
-        device_id = request.cookies.get('device_id', str(uuid.uuid4()))
-        user_agent = request.headers.get('User-Agent', 'Unknown')
-        page_url = request.headers.get('Referer', 'Unknown')
-        
-        # Parse user agent for device type
-        device_type = 'Desktop'
-        ua_lower = user_agent.lower()
-        if 'mobile' in ua_lower or 'android' in ua_lower or 'iphone' in ua_lower:
-            device_type = 'Mobile'
-        elif 'tablet' in ua_lower or 'ipad' in ua_lower:
-            device_type = 'Tablet'
-        
-        current_time = datetime.now(pytz.timezone('Asia/Kolkata'))
-        
-        # Check if visitor exists
-        existing_visitor = visitors_collection.find_one({
-            '$or': [
-                {'ip_address': ip_address},
-                {'device_id': device_id}
-            ]
-        })
-        
-        if existing_visitor:
-            # Update existing visitor
-            visitors_collection.update_one(
-                {'_id': existing_visitor['_id']},
-                {
-                    '$set': {
-                        'last_seen': current_time,
-                        'user_agent': user_agent,
-                        'last_page': page_url,
-                        'device_type': device_type
-                    },
-                    '$inc': {'visit_count': 1},
-                    '$addToSet': {'pages_visited': page_url}
-                }
-            )
-            logger.debug(f"Updated Netlify visitor: {ip_address}")
-        else:
-            # Create new visitor record
-            visitor_data = {
-                'ip_address': ip_address,
-                'device_id': device_id,
-                'first_seen': current_time,
-                'last_seen': current_time,
-                'user_agent': user_agent,
-                'device_type': device_type,
-                'last_page': page_url,
-                'pages_visited': [page_url],
-                'visit_count': 1,
-                'created_at': current_time,
-                'source': 'Netlify'
-            }
-            visitors_collection.insert_one(visitor_data)
-            logger.info(f"New Netlify visitor tracked: {ip_address}")
-            
-    except Exception as e:
-        logger.error(f"Error tracking Netlify visitor: {str(e)}")
+# ============ HELPERS ============
+def get_password_value():
+    """Read current password from MongoDB."""
+    if config_col is None:
+        return '!password'
+    doc = config_col.find_one({'_id': 'password'})
+    return doc['value'] if doc else '!password'
 
-# CORS Configuration
-CORS(app,
-     resources={ 
-         r"/api/*": {
-             "origins": [
-                 "https://abhinavpanwar.netlify.app",
-                 "http://127.0.0.1:5501",
-                 "http://localhost:5501"
-             ],
-             "supports_credentials": True,
-             "allow_headers": ["Content-Type"],
-             "methods": ["GET", "POST", "OPTIONS", "HEAD"],
-             "expose_headers": ["Content-Type"],
-             "max_age": 600
-         }
-     })
-=======
->>>>>>> f5472e2db014ea10e03497b40ae4fc70b66358d8
+def require_password(data):
+    """Returns True if the provided password matches. Use in admin endpoints."""
+    return (data or {}).get('password') == get_password_value()
 
-# MongoDB Configuration - FIXED connection string
-MONGO_URI = os.environ.get('MONGO_URI', 'mongodb+srv://abhinavpanwar:Abhinav1234@cluster0.vihawrj.mongodb.net/portfolio_analytics?retryWrites=true&w=majority&appName=Cluster0')
-MONGO_DB_NAME = os.environ.get('MONGO_DB_NAME', 'portfolio_analytics')
+# ============ CORS ============
+ALLOWED_ORIGINS = [
+    "https://abhinavpanwar.netlify.app",
+    "http://127.0.0.1:5501",
+    "http://localhost:5501"
+]
 
-# Initialize MongoDB connection
-try:
-    mongo_client = MongoClient(MONGO_URI)
-    # Test the connection
-    mongo_client.admin.command('ping')
-    db = mongo_client[MONGO_DB_NAME]
-    visitors_collection = db['visitors']
-    logger.info("✅ MongoDB connected successfully!")
-except Exception as e:
-    logger.error(f"❌ MongoDB connection failed: {str(e)}")
-    mongo_client = None
-    visitors_collection = None
-
-# Track visitor function - Only for Netlify site
-def track_visitor():
-    """Track visitor information from Netlify site in MongoDB"""
-    if visitors_collection is None:
-        logger.warning("MongoDB not available, skipping visitor tracking")
-        return
-    
-    try:
-        # Check if request is from Netlify
-        origin = request.headers.get('Origin', '')
-        referer = request.headers.get('Referer', '')
-        
-        # Only track if coming from Netlify site
-        if 'abhinavpanwar.netlify.app' not in origin and 'abhinavpanwar.netlify.app' not in referer:
-            logger.debug(f"Skipping tracking - not from Netlify: {origin}")
-            return
-        
-        ip_address = get_client_ip()
-        device_id = request.cookies.get('device_id', str(uuid.uuid4()))
-        user_agent = request.headers.get('User-Agent', 'Unknown')
-        page_url = request.headers.get('Referer', 'Unknown')
-        
-        # Parse user agent for device type
-        device_type = 'Desktop'
-        ua_lower = user_agent.lower()
-        if 'mobile' in ua_lower or 'android' in ua_lower or 'iphone' in ua_lower:
-            device_type = 'Mobile'
-        elif 'tablet' in ua_lower or 'ipad' in ua_lower:
-            device_type = 'Tablet'
-        
-        current_time = datetime.now(pytz.timezone('Asia/Kolkata'))
-        
-        # Check if visitor exists
-        existing_visitor = visitors_collection.find_one({
-            '$or': [
-                {'ip_address': ip_address},
-                {'device_id': device_id}
-            ]
-        })
-        
-        if existing_visitor:
-            # Update existing visitor
-            visitors_collection.update_one(
-                {'_id': existing_visitor['_id']},
-                {
-                    '$set': {
-                        'last_seen': current_time,
-                        'user_agent': user_agent,
-                        'last_page': page_url,
-                        'device_type': device_type
-                    },
-                    '$inc': {'visit_count': 1},
-                    '$addToSet': {'pages_visited': page_url}
-                }
-            )
-            logger.debug(f"Updated Netlify visitor: {ip_address}")
-        else:
-            # Create new visitor record
-            visitor_data = {
-                'ip_address': ip_address,
-                'device_id': device_id,
-                'first_seen': current_time,
-                'last_seen': current_time,
-                'user_agent': user_agent,
-                'device_type': device_type,
-                'last_page': page_url,
-                'pages_visited': [page_url],
-                'visit_count': 1,
-                'created_at': current_time,
-                'source': 'Netlify'
-            }
-            visitors_collection.insert_one(visitor_data)
-            logger.info(f"New Netlify visitor tracked: {ip_address}")
-            
-    except Exception as e:
-        logger.error(f"Error tracking Netlify visitor: {str(e)}")
-
-# CORS Configuration - UPDATED to include send_file endpoint
-CORS(app, resources={
-    r"/api/*": {
-        "origins": [
-            "https://abhinavpanwar.netlify.app",
-            "http://127.0.0.1:5501",
-            "http://localhost:5501"
-        ],
-        "supports_credentials": True,
-        "allow_headers": ["Content-Type"],
-        "methods": ["GET", "POST", "OPTIONS", "HEAD"],
-        "expose_headers": ["Content-Type"],
-        "max_age": 600
-    },
-    r"/send_message": {
-        "origins": [
-            "https://abhinavpanwar.netlify.app",
-            "http://127.0.0.1:5501",
-            "http://localhost:5501"
-        ]
-    },
-    r"/send_file": {  # ADD THIS
-        "origins": [
-            "https://abhinavpanwar.netlify.app",
-            "http://127.0.0.1:5501",
-            "http://localhost:5501"
-        ]
-    },
-    r"/get_messages": {
-        "origins": [
-            "https://abhinavpanwar.netlify.app",
-            "http://127.0.0.1:5501",
-            "http://localhost:5501"
-        ]
-    },
-    r"/get_password": {
-        "origins": [
-            "https://abhinavpanwar.netlify.app",
-            "http://127.0.0.1:5501",
-            "http://localhost:5501"
-        ]
-    }
-})
+CORS(app, resources={r"/*": {
+    "origins": ALLOWED_ORIGINS,
+    "supports_credentials": True,
+    "allow_headers": ["Content-Type"],
+    "methods": ["GET", "POST", "OPTIONS", "HEAD"],
+    "max_age": 600
+}})
 
 app.config.update(
     SESSION_COOKIE_SECURE=True,
-    SESSION_COOKIE_SAMESITE='None',
+    SESSION_COOKIE_SAMESITE='Lax',
     SESSION_COOKIE_HTTPONLY=True,
-    PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=8),
     PREFERRED_URL_SCHEME='https'
 )
 
+# ============ ACTIVE SESSIONS ============
 active_sessions = {}
 lock = threading.Lock()
-SESSION_TIMEOUT = 15  # Time in seconds before considering a session expired
-CLEANUP_INTERVAL = 5  # Time in seconds between session cleanup runs
+SESSION_TIMEOUT  = 15
+CLEANUP_INTERVAL = 5
 
-# Database Connection Function
-def get_db_connection(db_name):
-    conn = sqlite3.connect(db_name)
-    conn.row_factory = sqlite3.Row
-    conn.execute('PRAGMA foreign_keys = ON')
-    return conn
-
-# Initialize Database Function
-def init_db():
-    try:
-        conn = get_db_connection('headline.db')
-        conn.execute('''CREATE TABLE IF NOT EXISTS headline (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            text TEXT NOT NULL DEFAULT ''
-        )''')
-        if not conn.execute('SELECT 1 FROM headline LIMIT 1').fetchone():
-            conn.execute('INSERT INTO headline (text) VALUES ("")')
-        conn.commit()
-        conn.close()
-
-        # Polls DB Schema
-        conn = get_db_connection('polls.db')
-        conn.execute('''CREATE TABLE IF NOT EXISTS polls (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            question TEXT NOT NULL,
-            options TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )''')
-        conn.execute('''CREATE TABLE IF NOT EXISTS responses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            poll_id INTEGER NOT NULL,
-            option_index INTEGER NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(poll_id) REFERENCES polls(id) ON DELETE CASCADE
-        )''')
-        
-        # Check if created_at column exists in polls table, add if not
-        cursor = conn.execute("PRAGMA table_info(polls)")
-        columns = [column[1] for column in cursor.fetchall()]
-        if 'created_at' not in columns:
-            conn.execute('ALTER TABLE polls ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
-        
-        conn.commit()
-        conn.close()
-        logger.info("Database initialization complete")
-    except Exception as e:
-        logger.error(f"Database initialization failed: {str(e)}")
-        raise
-
-# Session Cleanup Thread
 def cleanup_sessions():
     while True:
         time.sleep(CLEANUP_INTERVAL)
@@ -370,560 +156,684 @@ def cleanup_sessions():
         with lock:
             expired = [k for k, v in active_sessions.items()
                        if (now - v['last_active']).total_seconds() > SESSION_TIMEOUT]
-            for device_id in expired:
-                del active_sessions[device_id]
-                logger.debug(f"Cleaned up expired session: {device_id}")
+            for d in expired:
+                del active_sessions[d]
 
-# Start the session cleanup thread
 threading.Thread(target=cleanup_sessions, daemon=True).start()
 
-# Home Route
-@app.route('/')
-def home():
-    return render_template('index.html', server_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+# ============ ROUTES ============
 
-# End Session API Route
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '')
+        password = request.form.get('password', '')
+        if (username == ADMIN_USERNAME and
+                hashlib.sha256(password.encode()).hexdigest() == ADMIN_PASSWORD_HASH):
+            session.permanent = True
+            session['logged_in'] = True
+            return redirect(url_for('home'))
+        error = 'Invalid credentials'
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/')
+@login_required
+def home():
+    return render_template('index.html', server_time=now_ist().strftime("%Y-%m-%d %H:%M:%S"))
+
+# ---------- Active Users ----------
 @app.route('/api/active_users/end', methods=['POST'])
 def end_session():
-    if not request.is_json:
-        return jsonify({"error": "Content-Type must be application/json"}), 415
-
-    device_id = request.json.get('device_id')
+    device_id = (request.json or {}).get('device_id')
     with lock:
-        if device_id in active_sessions:
-            del active_sessions[device_id]
-            logger.info(f"Ended session for device: {device_id}")
+        active_sessions.pop(device_id, None)
     return jsonify({"status": "session_ended"})
 
-# Active Users API Route
 @app.route('/api/active_users', methods=['GET', 'OPTIONS'])
 def active_users():
     if request.method == 'OPTIONS':
-        response = make_response()
-        response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-        return response
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+        r.headers['Access-Control-Allow-Credentials'] = 'true'
+        return r
 
     device_id = request.cookies.get('device_id', str(uuid.uuid4()))
     now = datetime.now()
-
     with lock:
-        if device_id in active_sessions:
-            active_sessions[device_id]['last_active'] = now
-        else:
-            active_sessions[device_id] = {'last_active': now, 'created': now}
-            logger.info(f"New session started for device: {device_id}")
+        active_sessions[device_id] = active_sessions.get(device_id, {'created': now})
+        active_sessions[device_id]['last_active'] = now
 
     response = make_response(jsonify({
         'active_users': len(active_sessions),
         'your_device_id': device_id,
         'last_active': active_sessions[device_id]['last_active'].isoformat()
     }))
-
     if not request.cookies.get('device_id'):
-        response.set_cookie(
-            'device_id',
-            value=device_id,
-            max_age=365 * 24 * 60 * 60,
-            secure=True,
-            httponly=True,
-            samesite='None',
-            path='/'
-        )
+        response.set_cookie('device_id', device_id, max_age=365*24*3600,
+                            secure=True, httponly=True, samesite='None', path='/')
     return response
 
-# Healthcheck Route
+# ---------- Healthcheck ----------
 @app.route('/api/healthcheck')
 def healthcheck():
     with lock:
         active_count = len(active_sessions)
-        oldest_session = min(
-            (s['created'] for s in active_sessions.values()),
-            default=datetime.now()
-        )
-
     return jsonify({
         "status": "healthy",
         "active_users": active_count,
-        "server_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "version": "1.3.1"
+        "server_time": now_ist().strftime("%Y-%m-%d %H:%M:%S"),
+        "version": "2.1.0"
     })
 
-# Get Headline API
+# ---------- Headline ----------
 @app.route('/api/get_h3', methods=['GET'])
 def get_h3():
-    try:
-        conn = get_db_connection('headline.db')
-        result = conn.execute('SELECT text FROM headline WHERE id = 1').fetchone()
-        return jsonify({'h3_text': result['text'] if result else ""})
-    except Exception as e:
-        logger.error(f"Error getting headline: {str(e)}")
-        return jsonify({'error': 'Failed to get headline'}), 500
-    finally:
-        if 'conn' in locals():
-            conn.close()
+    if headline_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    doc = headline_col.find_one({'_id': 'headline'})
+    return jsonify({'h3_text': doc['text'] if doc else ''})
 
-# Set Headline API
 @app.route('/api/set_h3', methods=['POST'])
 def set_h3():
+    if headline_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
     if not request.is_json:
-        return jsonify({"error": "Content-Type must be application/json"}), 415
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    data = request.json
+    if not require_password(data):
+        return jsonify({'error': 'Unauthorized'}), 401
+    new_text = data.get('new_text', '')
+    headline_col.update_one({'_id': 'headline'}, {'$set': {'text': new_text}}, upsert=True)
+    _api_log('headline_update', extra={'new_text': new_text})
+    return jsonify({'status': 'updated', 'new_text': new_text})
 
-    try:
-        data = request.get_json()
-        new_text = data.get('new_text', '')
-        
-        conn = get_db_connection('headline.db')
-        conn.execute('UPDATE headline SET text = ? WHERE id = 1', (new_text,))
-        conn.commit()
-        return jsonify({'status': 'updated', 'new_text': new_text})
-    except Exception as e:
-        logger.error(f"Error setting headline: {str(e)}")
-        return jsonify({'error': 'Failed to update headline'}), 500
-    finally:
-        if 'conn' in locals():
-            conn.close()
-
-# Create Poll API
+# ---------- Polls ----------
 @app.route('/api/poll', methods=['POST'])
 def create_poll():
+    if polls_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
     if not request.is_json:
-        return jsonify({"error": "Content-Type must be application/json"}), 415
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    data = request.json
+    if not require_password(data):
+        return jsonify({'error': 'Unauthorized'}), 401
+    question = data.get('question', '').strip()
+    options  = [o.strip() for o in data.get('options', []) if o.strip()]
+    if not question:
+        return jsonify({'error': 'Question is required'}), 400
+    if len(options) < 2:
+        return jsonify({'error': 'At least 2 options required'}), 400
 
-    try:
-        data = request.get_json()
-        question = data.get('question', '').strip()
-        options = [opt.strip() for opt in data.get('options', []) if opt.strip()]
-        
-        if not question:
-            return jsonify({"error": "Question is required"}), 400
-        if len(options) < 2:
-            return jsonify({"error": "At least 2 options are required"}), 400
+    polls_col.delete_many({})
+    responses_col.delete_many({})
+    poll_id = str(uuid.uuid4())
+    polls_col.insert_one({'_id': poll_id, 'question': question, 'options': options, 'created_at': now_ist()})
+    _api_log('poll_create', extra={'question': question, 'options': options})
+    return jsonify({'status': 'success', 'poll_id': poll_id, 'question': question, 'options': options})
 
-        conn = get_db_connection('polls.db')
-        with conn:
-            conn.execute('DELETE FROM polls')
-            conn.execute('INSERT INTO polls (question, options) VALUES (?, ?)', 
-                        (question, json.dumps(options)))
-            poll = conn.execute('SELECT id, question FROM polls ORDER BY id DESC LIMIT 1').fetchone()
-            logger.info(f"Created new poll: {poll['id']}")
-            return jsonify({
-                "status": "success",
-                "message": "Poll created successfully",
-                "poll_id": poll['id'],
-                "question": question,
-                "options": options
-            })
-    except Exception as e:
-        logger.error(f"Error creating poll: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if 'conn' in locals():
-            conn.close()
-
-# Get Current Poll API
 @app.route('/api/current_poll', methods=['GET'])
 def current_poll():
-    try:
-        conn = get_db_connection('polls.db')
-        poll = conn.execute('''SELECT id, question, options, created_at 
-                            FROM polls ORDER BY created_at DESC LIMIT 1''').fetchone()
-        
-        if poll:
-            return jsonify({
-                'poll_id': poll['id'],
-                'question': poll['question'],
-                'options': json.loads(poll['options']),
-                'created_at': poll['created_at']
-            })
+    if polls_col is None:
         return jsonify({'error': 'No active poll'}), 404
-    except Exception as e:
-        logger.error(f"Error getting current poll: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if 'conn' in locals():
-            conn.close()
+    poll = polls_col.find_one({})
+    if not poll:
+        return jsonify({'error': 'No active poll'}), 404
+    return jsonify({
+        'poll_id':    poll['_id'],
+        'question':   poll['question'],
+        'options':    poll['options'],
+        'created_at': poll['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+    })
 
-# Submit Poll Response API
 @app.route('/api/submit_response', methods=['POST'])
 def submit_response():
+    if polls_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
     if not request.is_json:
-        return jsonify({"error": "Content-Type must be application/json"}), 415
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    data         = request.json
+    option_index = data.get('option_index')
+    poll_id      = data.get('poll_id')
+    if option_index is None:
+        return jsonify({'error': 'Missing option_index'}), 400
 
-    try:
-        data = request.get_json()
-        option_index = data.get('option_index')
-        poll_id = data.get('poll_id')
-        
-        if option_index is None:
-            return jsonify({'error': 'Missing option_index'}), 400
+    poll = polls_col.find_one({'_id': poll_id} if poll_id else {})
+    if not poll:
+        return jsonify({'error': 'No active poll'}), 404
+    if option_index < 0 or option_index >= len(poll['options']):
+        return jsonify({'error': 'Invalid option_index'}), 400
 
-        conn = get_db_connection('polls.db')
-        with conn:
-            if not poll_id:
-                poll = conn.execute('''SELECT id FROM polls ORDER BY id DESC LIMIT 1''').fetchone()
-                if not poll:
-                    return jsonify({'error': 'No active poll to respond to'}), 404
-                poll_id = poll['id']
-            
-            poll = conn.execute('''SELECT options FROM polls WHERE id = ?''', (poll_id,)).fetchone()
-            if not poll:
-                return jsonify({'error': 'Invalid poll_id'}), 400
-            
-            options = json.loads(poll['options'])
-            if option_index < 0 or option_index >= len(options):
-                return jsonify({'error': 'Invalid option_index'}), 400
-            
-            conn.execute('''INSERT INTO responses (poll_id, option_index) VALUES (?, ?)''', 
-                        (poll_id, option_index))
-            logger.info(f"Submitted response to poll {poll_id}, option {option_index}")
-            return jsonify({
-                'status': 'success',
-                'poll_id': poll_id,
-                'option_index': option_index
-            })
-    except Exception as e:
-        logger.error(f"Error submitting response: {str(e)}")
-        return jsonify({'error': 'Failed to submit response'}), 500
-    finally:
-        if 'conn' in locals():
-            conn.close()
+    responses_col.insert_one({'poll_id': poll['_id'], 'option_index': option_index, 'timestamp': now_ist()})
+    return jsonify({'status': 'success', 'poll_id': poll['_id'], 'option_index': option_index})
 
-# Get Poll Results API
 @app.route('/api/poll_results', methods=['GET'])
 def get_poll_results():
-    try:
-        conn = get_db_connection('polls.db')
-        
-        # Get the latest poll
-        poll = conn.execute('''SELECT id, question, options FROM polls ORDER BY id DESC LIMIT 1''').fetchone()
-        if not poll:
-            return jsonify({'error': 'No active poll found'}), 404
-            
-        # Get all responses for this poll
-        responses = conn.execute('''SELECT option_index, COUNT(*) as count 
-                                 FROM responses 
-                                 WHERE poll_id = ?
-                                 GROUP BY option_index''', (poll['id'],)).fetchall()
-        
-        # Format the results
-        options = json.loads(poll['options'])
-        results = {i: 0 for i in range(len(options))}
-        for row in responses:
-            results[row['option_index']] = row['count']
-        
-        return jsonify({
-            'poll_id': poll['id'],
-            'question': poll['question'],
-            'options': options,
-            'results': results,
-            'total_responses': sum(results.values())
-        })
-    except Exception as e:
-        logger.error(f"Error getting poll results: {str(e)}")
-        return jsonify({'error': 'Failed to get poll results'}), 500
-    finally:
-        if 'conn' in locals():
-            conn.close()
+    if polls_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    poll = polls_col.find_one({})
+    if not poll:
+        return jsonify({'error': 'No active poll'}), 404
 
-# End Poll API
+    pipeline = [
+        {'$match': {'poll_id': poll['_id']}},
+        {'$group': {'_id': '$option_index', 'count': {'$sum': 1}}}
+    ]
+    results = {i: 0 for i in range(len(poll['options']))}
+    for row in responses_col.aggregate(pipeline):
+        results[row['_id']] = row['count']
+
+    return jsonify({
+        'poll_id':         poll['_id'],
+        'question':        poll['question'],
+        'options':         poll['options'],
+        'results':         results,
+        'total_responses': sum(results.values())
+    })
+
 @app.route('/api/end_poll', methods=['POST'])
 def end_poll():
+    if polls_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
     if not request.is_json:
-        return jsonify({"error": "Content-Type must be application/json"}), 415
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    if not require_password(request.json):
+        return jsonify({'error': 'Unauthorized'}), 401
+    polls_col.delete_many({})
+    responses_col.delete_many({})
+    _api_log('poll_end')
+    return jsonify({'status': 'poll_ended'})
 
-    try:
-        conn = get_db_connection('polls.db')
-        with conn:
-            conn.execute('DELETE FROM responses')
-            conn.execute('DELETE FROM polls')
-            logger.info("Ended current poll and cleared all responses")
-        return jsonify({"status": "poll_ended"})
-    except Exception as e:
-        logger.error(f"Error ending poll: {str(e)}")
-        return jsonify({"error": "Failed to end poll"}), 500
-    finally:
-        if 'conn' in locals():
-            conn.close()
-
-messages = []
-PASSWORD = "password"
-
-@app.route('/send_message', methods=['POST'])
-def send_message():
-    data = request.json
-    sender = data.get('sender')
-    message = data.get('message')
-
-    if sender and message:
-        current_time = datetime.now(pytz.timezone('Asia/Kolkata')).strftime("%d-%m-%Y %I:%M %p")
-        messages.append({'sender': sender, 'message': message, 'time': current_time})
-        return jsonify({'status': 'Message received', 'message': data})
-    
-    return jsonify({'status': 'error', 'message': 'Invalid data'}), 400
-
-# Add these endpoints to your Flask server code
-
-@app.route('/send_file', methods=['POST'])
-def send_file():
-    """Endpoint to receive and store file messages"""
-    try:
-        data = request.json
-        sender = data.get('sender')
-        file_name = data.get('name')
-        file_data = data.get('data')  # base64 encoded
-        file_type = data.get('type')
-        file_size = data.get('size')
-        current_time = datetime.now(pytz.timezone('Asia/Kolkata')).strftime("%d-%m-%Y %I:%M %p")
-        
-        if sender and file_data:
-            # Store file message with download link
-            file_message = {
-                'sender': sender,
-                'fileName': file_name,
-                'fileData': file_data,
-                'fileType': file_type,
-                'fileSize': file_size,
-                'time': current_time,
-                'isFile': True
-            }
-            messages.append(file_message)
-            
-            # Optional: Limit stored messages to last 200 to save memory
-            if len(messages) > 200:
-                messages.pop(0)
-                
-            logger.info(f"File received from {sender}: {file_name}")
-            return jsonify({'status': 'File received', 'file': file_name})
-        
-        return jsonify({'status': 'error', 'message': 'Invalid file data'}), 400
-    except Exception as e:
-        logger.error(f"Error sending file: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@app.route('/get_messages', methods=['GET'])
-def get_messages():
-    return jsonify(messages)
-
+# ---------- Password ----------
 @app.route('/get_password', methods=['GET'])
 def get_password():
-    global PASSWORD
-    return jsonify({"password": PASSWORD})
+    # NOTE: returns password to authenticated frontend — consider moving to token-based auth in future
+    return jsonify({'password': get_password_value()})
 
 @app.route('/set_password', methods=['POST'])
 def set_password():
-    global PASSWORD
+    if config_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
     if not request.is_json:
-        return jsonify({"error": "Content-Type must be application/json"}), 415
-    
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    data = request.json
+    if not require_password(data):
+        return jsonify({'error': 'Unauthorized'}), 401
+    new_password = data.get('new_password', '').strip()
+    if not new_password:
+        return jsonify({'error': 'Password cannot be empty'}), 400
+    config_col.update_one({'_id': 'password'}, {'$set': {'value': new_password}}, upsert=True)
+    _api_log('password_change')
+    return jsonify({'status': 'success', 'message': 'Password updated'})
+
+# ---------- Chat Messages ----------
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    if messages_col is None:
+        return jsonify({'status': 'error', 'message': 'DB unavailable'}), 500
+    data    = request.json or {}
+    sender  = data.get('sender', '').strip()
+    message = data.get('message', '').strip()
+    if not sender or not message:
+        return jsonify({'status': 'error', 'message': 'Invalid data'}), 400
+
+    messages_col.insert_one({
+        'sender':     sender,
+        'message':    message,
+        'time':       now_ist().strftime("%d-%m-%Y %I:%M %p"),
+        'isFile':     False,
+        'created_at': now_ist()
+    })
+    return jsonify({'status': 'Message received'})
+
+@app.route('/send_file', methods=['POST'])
+def receive_file():
+    if messages_col is None:
+        return jsonify({'status': 'error', 'message': 'DB unavailable'}), 500
+    data      = request.json or {}
+    sender    = data.get('sender')
+    file_data = data.get('data')
+    if not sender or not file_data:
+        return jsonify({'status': 'error', 'message': 'Invalid file data'}), 400
+
+    messages_col.insert_one({
+        'sender':     sender,
+        'fileName':   data.get('name'),
+        'fileData':   file_data,
+        'fileType':   data.get('type'),
+        'fileSize':   data.get('size'),
+        'time':       now_ist().strftime("%d-%m-%Y %I:%M %p"),
+        'isFile':     True,
+        'created_at': now_ist()
+    })
+
+    # Keep only last 200 messages
+    total = messages_col.count_documents({})
+    if total > 200:
+        oldest = list(messages_col.find({}, {'_id': 1}).sort('created_at', 1).limit(total - 200))
+        messages_col.delete_many({'_id': {'$in': [d['_id'] for d in oldest]}})
+
+    logger.info(f"File received from {sender}: {data.get('name')}")
+    return jsonify({'status': 'File received', 'file': data.get('name')})
+
+@app.route('/get_messages', methods=['GET'])
+def get_messages():
+    if messages_col is None:
+        return jsonify([])
     try:
-        data = request.get_json()
-        new_password = data.get('new_password', '').strip()
-        
-        if not new_password:
-            return jsonify({"error": "Password cannot be empty"}), 400
-        
-        PASSWORD = new_password
-        return jsonify({"status": "success", "message": "Password updated"})
+        docs = list(messages_col.find({}, {'_id': 0, 'created_at': 0}).sort('created_at', 1))
+        return jsonify(docs)
     except Exception as e:
-        logger.error(f"Error setting password: {str(e)}")
-        return jsonify({"error": "Failed to update password"}), 500
-    
+        logger.error(f"get_messages error: {e}")
+        return jsonify([])
+
 @app.route('/clear_messages', methods=['POST'])
 def clear_messages():
-    global messages
-    messages.clear()
-    logger.info("All chat messages cleared")
-    return jsonify({"status": "success", "message": "All chat messages cleared"})
+    if messages_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    if not require_password(request.json):
+        return jsonify({'error': 'Unauthorized'}), 401
+    messages_col.delete_many({})
+    _api_log('chat_clear')
+    return jsonify({'status': 'success', 'message': 'All chat messages cleared'})
 
-# ============ VISITOR TRACKING ENDPOINTS ============
-
+# ============ VISITOR TRACKING ============
 @app.route('/api/track_netlify_visitor', methods=['POST', 'OPTIONS'])
 def track_netlify_visitor():
-    """Endpoint for Netlify site to send tracking data"""
     if request.method == 'OPTIONS':
-        response = make_response()
-        response.headers['Access-Control-Allow-Origin'] = 'https://abhinavpanwar.netlify.app'
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-        return response
-    
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = 'https://abhinavpanwar.netlify.app'
+        r.headers['Access-Control-Allow-Credentials'] = 'true'
+        r.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return r
+    if visitors_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
     if not request.is_json:
-        return jsonify({"error": "Content-Type must be application/json"}), 415
-    
-    try:
-        data = request.json
-        ip_address = get_client_ip()
-        device_id = request.cookies.get('device_id', str(uuid.uuid4()))
-        user_agent = request.headers.get('User-Agent', 'Unknown')
-        page_url = data.get('page_url', 'Unknown')
-        
-        # Parse device type
-        device_type = 'Desktop'
-        ua_lower = user_agent.lower()
-        if 'mobile' in ua_lower or 'android' in ua_lower or 'iphone' in ua_lower:
-            device_type = 'Mobile'
-        elif 'tablet' in ua_lower or 'ipad' in ua_lower:
-            device_type = 'Tablet'
-        
-        current_time = datetime.now(pytz.timezone('Asia/Kolkata'))
-        
-        # Check if MongoDB is available
-        if visitors_collection is None:
-            logger.error("MongoDB not available")
-            return jsonify({"error": "Database not available"}), 500
-        
-        # Update or create visitor
-        existing_visitor = visitors_collection.find_one({
-            '$or': [
-                {'ip_address': ip_address},
-                {'device_id': device_id}
-            ]
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+
+    data      = request.json
+    ip        = get_client_ip()
+    device_id = request.cookies.get('device_id', str(uuid.uuid4()))
+    ua        = request.headers.get('User-Agent', 'Unknown')
+    page_url  = data.get('page_url', 'Unknown')
+    current   = now_ist()
+
+    existing = visitors_col.find_one({'$or': [{'ip_address': ip}, {'device_id': device_id}]})
+    if existing:
+        visitors_col.update_one({'_id': existing['_id']}, {
+            '$set': {'last_seen': current, 'user_agent': ua, 'last_page': page_url, 'device_type': parse_device(ua)},
+            '$inc': {'visit_count': 1},
+            '$addToSet': {'pages_visited': page_url}
         })
-        
-        if existing_visitor:
-            visitors_collection.update_one(
-                {'_id': existing_visitor['_id']},
-                {
-                    '$set': {
-                        'last_seen': current_time,
-                        'user_agent': user_agent,
-                        'last_page': page_url,
-                        'device_type': device_type
-                    },
-                    '$inc': {'visit_count': 1},
-                    '$addToSet': {'pages_visited': page_url}
-                }
-            )
-            logger.info(f"Updated visitor: {ip_address}")
-        else:
-            visitor_data = {
-                'ip_address': ip_address,
-                'device_id': device_id,
-                'first_seen': current_time,
-                'last_seen': current_time,
-                'user_agent': user_agent,
-                'device_type': device_type,
-                'last_page': page_url,
-                'pages_visited': [page_url],
-                'visit_count': 1,
-                'created_at': current_time,
-                'source': 'Netlify'
-            }
-            visitors_collection.insert_one(visitor_data)
-            logger.info(f"New visitor tracked: {ip_address}")
-        
-        # Set device_id cookie if not exists
-        response = jsonify({"status": "tracked"})
-        if not request.cookies.get('device_id'):
-            response.set_cookie(
-                'device_id',
-                value=device_id,
-                max_age=365 * 24 * 60 * 60,
-                secure=True,
-                httponly=True,
-                samesite='None',
-                path='/'
-            )
-        return response
-        
-    except Exception as e:
-        logger.error(f"Error in track_netlify_visitor: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+    else:
+        visitors_col.insert_one({
+            'ip_address': ip, 'device_id': device_id,
+            'first_seen': current, 'last_seen': current,
+            'user_agent': ua, 'device_type': parse_device(ua),
+            'last_page': page_url, 'pages_visited': [page_url],
+            'visit_count': 1, 'created_at': current, 'source': 'Netlify'
+        })
+
+    response = jsonify({'status': 'tracked'})
+    if not request.cookies.get('device_id'):
+        response.set_cookie('device_id', device_id, max_age=365*24*3600,
+                            secure=True, httponly=True, samesite='None', path='/')
+    return response
 
 @app.route('/api/visitors/stats', methods=['GET'])
 def get_visitor_stats():
-    """Get visitor statistics for dashboard"""
-    if visitors_collection is None:
-        return jsonify({"error": "MongoDB not connected"}), 500
-    
-    try:
-        # Total unique visitors
-        total_visitors = visitors_collection.count_documents({})
-        
-        # Today's visitors
-        today_start = datetime.now(pytz.timezone('Asia/Kolkata')).replace(hour=0, minute=0, second=0, microsecond=0)
-        today_visitors = visitors_collection.count_documents({
-            'first_seen': {'$gte': today_start}
-        })
-        
-        # Active visitors in last 30 minutes
-        thirty_min_ago = datetime.now(pytz.timezone('Asia/Kolkata')) - timedelta(minutes=30)
-        active_now = visitors_collection.count_documents({
-            'last_seen': {'$gte': thirty_min_ago}
-        })
-        
-        # Device breakdown
-        device_stats = list(visitors_collection.aggregate([
-            {'$group': {'_id': '$device_type', 'count': {'$sum': 1}}}
-        ]))
-        
-        return jsonify({
-            'total_visitors': total_visitors,
-            'today_visitors': today_visitors,
-            'active_now': active_now,
-            'device_stats': device_stats
-        })
-    except Exception as e:
-        logger.error(f"Error getting visitor stats: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+    if visitors_col is None:
+        return jsonify({'total_visitors': 0, 'today_visitors': 0, 'active_now': 0, 'device_stats': []})
+    today_start    = now_ist().replace(hour=0, minute=0, second=0, microsecond=0)
+    thirty_min_ago = now_ist() - timedelta(minutes=30)
+    device_stats   = list(visitors_col.aggregate([{'$group': {'_id': '$device_type', 'count': {'$sum': 1}}}]))
+    return jsonify({
+        'total_visitors': visitors_col.count_documents({}),
+        'today_visitors': visitors_col.count_documents({'first_seen': {'$gte': today_start}}),
+        'active_now':     visitors_col.count_documents({'last_seen': {'$gte': thirty_min_ago}}),
+        'device_stats':   device_stats
+    })
 
 @app.route('/api/visitors/list', methods=['GET'])
 def get_visitors_list():
-    """Get list of recent visitors"""
-    if visitors_collection is None:
-        return jsonify({"error": "MongoDB not connected"}), 500
-    
-    try:
-        limit = int(request.args.get('limit', 10))
-        
-        visitors = list(visitors_collection.find(
-            {},
-            {'_id': 0}  # Exclude MongoDB _id
-        ).sort('last_seen', -1).limit(limit))
-        
-        # Convert datetime objects to string
-        for visitor in visitors:
-            if 'first_seen' in visitor:
-                visitor['first_seen'] = visitor['first_seen'].strftime('%Y-%m-%d %H:%M:%S')
-            if 'last_seen' in visitor:
-                visitor['last_seen'] = visitor['last_seen'].strftime('%Y-%m-%d %H:%M:%S')
-            if 'created_at' in visitor:
-                visitor['created_at'] = visitor['created_at'].strftime('%Y-%m-%d %H:%M:%S')
-        
-        return jsonify({
-            'visitors': visitors,
-            'total': len(visitors)
-        })
-    except Exception as e:
-        logger.error(f"Error getting visitors list: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+    if visitors_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    limit    = int(request.args.get('limit', 10))
+    visitors = list(visitors_col.find({}, {'_id': 0}).sort('last_seen', -1).limit(limit))
+    for v in visitors:
+        for key in ('first_seen', 'last_seen', 'created_at'):
+            if key in v and hasattr(v[key], 'strftime'):
+                v[key] = v[key].strftime('%Y-%m-%d %H:%M:%S')
+    return jsonify({'visitors': visitors, 'total': len(visitors)})
 
-# Test endpoint for MongoDB connection
+# ============ USER LOGS ============
+def _api_log(event, extra=None):
+    if user_logs_col is None:
+        return
+    try:
+        entry = {
+            'event':       event,
+            'ip_address':  get_client_ip(),
+            'device_type': parse_device(request.headers.get('User-Agent', '')),
+            'user_agent':  request.headers.get('User-Agent', 'Unknown'),
+            'page':        request.headers.get('Referer', 'server'),
+            'timestamp':   now_ist()
+        }
+        if extra:
+            entry.update(extra)
+        user_logs_col.insert_one(entry)
+    except Exception as e:
+        logger.error(f"_api_log error: {e}")
+
+@app.route('/api/log', methods=['POST', 'OPTIONS'])
+def log_event():
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+        r.headers['Access-Control-Allow-Credentials'] = 'true'
+        r.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return r
+    if user_logs_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+
+    data       = request.json
+    event_type = data.get('event')
+    if not event_type:
+        return jsonify({'error': 'Missing event type'}), 400
+
+    entry = {
+        'event':       event_type,
+        'ip_address':  get_client_ip(),
+        'device_type': parse_device(request.headers.get('User-Agent', '')),
+        'user_agent':  request.headers.get('User-Agent', 'Unknown'),
+        'page':        data.get('page', 'Unknown'),
+        'timestamp':   now_ist()
+    }
+    if event_type in ('login', 'login_failed'):
+        entry['username'] = data.get('username', 'Unknown')
+    elif event_type == 'message':
+        entry['username'] = data.get('username', 'Unknown')
+        entry['message']  = data.get('message', '')
+    elif event_type == 'file_send':
+        entry['username']  = data.get('username', 'Unknown')
+        entry['file_name'] = data.get('file_name', 'Unknown')
+        entry['file_type'] = data.get('file_type', 'Unknown')
+        entry['file_size'] = data.get('file_size', 0)
+
+    user_logs_col.insert_one(entry)
+    return jsonify({'status': 'logged'})
+
+@app.route('/api/logs', methods=['GET'])
+def get_logs():
+    if user_logs_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    token = request.headers.get('X-Admin-Token') or request.args.get('token')
+    if token != app.secret_key:
+        return jsonify({'error': 'Unauthorized'}), 401
+    event_filter = request.args.get('event')
+    limit        = int(request.args.get('limit', 100))
+    query        = {'event': event_filter} if event_filter else {}
+    logs         = list(user_logs_col.find(query, {'_id': 0}).sort('timestamp', -1).limit(limit))
+    for log in logs:
+        if 'timestamp' in log and hasattr(log['timestamp'], 'strftime'):
+            log['timestamp'] = log['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
+    return jsonify({'logs': logs, 'total': len(logs)})
+
+@app.route('/api/logs/clear', methods=['POST'])
+def clear_logs():
+    if user_logs_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    if not require_password(request.json):
+        return jsonify({'error': 'Unauthorized'}), 401
+    result = user_logs_col.delete_many({})
+    return jsonify({'status': 'cleared', 'deleted': result.deleted_count})
+
+# ============ DB TEST ============
 @app.route('/api/test_db')
 def test_db():
-    """Test MongoDB connection"""
-    if visitors_collection is not None:
+    if visitors_col is not None:
         try:
-            count = visitors_collection.count_documents({})
             return jsonify({
-                "status": "connected",
-                "visitor_count": count,
-                "message": "✅ MongoDB is working!"
+                'status':        'connected',
+                'visitor_count': visitors_col.count_documents({}),
+                'message_count': messages_col.count_documents({}),
+                'log_count':     user_logs_col.count_documents({}),
+                'message':       '✅ MongoDB is working!'
             })
         except Exception as e:
-            return jsonify({
-                "status": "error",
-                "message": f"❌ MongoDB error: {str(e)}"
-            }), 500
-    else:
-        return jsonify({
-            "status": "error",
-            "message": "❌ MongoDB not connected"
-        }), 500
+            return jsonify({'status': 'error', 'message': str(e)}), 500
+    return jsonify({'status': 'error', 'message': '❌ MongoDB not connected'}), 500
+
+# ============ KILL SWITCH (persisted in MongoDB) ============
+@app.route('/api/netlify/kill-status', methods=['GET', 'OPTIONS'])
+def netlify_kill_status():
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = '*'
+        r.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return r
+    try:
+        killed, updated_at = False, None
+        if config_col is not None:
+            doc = config_col.find_one({'_id': 'kill_switch'})
+            logger.debug(f"kill-status doc: {doc}")
+            if doc:
+                killed     = doc.get('killed', False)
+                updated_at = doc.get('updated_at')
+    except Exception as e:
+        logger.error(f"kill-status error: {e}")
+    r = make_response(jsonify({'killed': killed, 'updated_at': updated_at}))
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    r.headers['Cache-Control'] = 'no-store'
+    return r
+
+@app.route('/api/netlify/kill', methods=['POST', 'OPTIONS'])
+def netlify_kill():
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = '*'
+        return r
+    if config_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    data = request.get_json() or {}
+    if not require_password(data):
+        return jsonify({'error': 'Unauthorized'}), 401
+    updated_at = now_ist().isoformat()
+    result = config_col.update_one(
+        {'_id': 'kill_switch'},
+        {'$set': {'killed': True, 'updated_at': updated_at}},
+        upsert=True
+    )
+    logger.info(f"kill update result: matched={result.matched_count} modified={result.modified_count} upserted={result.upserted_id}")
+    _api_log('kill_switch_on')
+    return jsonify({'success': True, 'activated_at': updated_at})
+
+@app.route('/api/netlify/restore', methods=['POST', 'OPTIONS'])
+def netlify_restore():
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = '*'
+        return r
+    if config_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    data = request.get_json() or {}
+    if not require_password(data):
+        return jsonify({'error': 'Unauthorized'}), 401
+    updated_at = now_ist().isoformat()
+    result = config_col.update_one(
+        {'_id': 'kill_switch'},
+        {'$set': {'killed': False, 'updated_at': updated_at}},
+        upsert=True
+    )
+    logger.info(f"restore update result: matched={result.matched_count} modified={result.modified_count} upserted={result.upserted_id}")
+    _api_log('kill_switch_off')
+    return jsonify({'success': True, 'deactivated_at': updated_at})
+
+# ============ SKILL SCORES ============
+@app.route('/api/scores', methods=['GET', 'OPTIONS'])
+def get_scores():
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = '*'
+        r.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return r
+    if scores_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    doc = scores_col.find_one({'_id': 'skills'}, {'_id': 0})
+    r = make_response(jsonify(doc or {}))
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    return r
+
+@app.route('/api/scores', methods=['POST', 'OPTIONS'])
+def set_scores():
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = '*'
+        r.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return r
+    if scores_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    data    = request.json or {}
+    skill   = data.get('skill')
+    value   = data.get('value')
+    if skill not in ('F', 'SM', 'TM', 'PS', 'DM', 'C') or not isinstance(value, int) or not (0 <= value <= 100):
+        return jsonify({'error': 'Invalid skill or value'}), 400
+    scores_col.update_one({'_id': 'skills'},
+        {'$set': {skill: value, 'updated_at': now_ist().strftime('%d %b %Y, %I:%M %p')}},
+        upsert=True)
+    r = make_response(jsonify({'status': 'updated', 'skill': skill, 'value': value}))
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    return r
+
+# ============ RATING ============
+@app.route('/api/rating', methods=['GET', 'OPTIONS'])
+def get_rating():
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = '*'
+        r.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return r
+    if rating_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    doc = rating_col.find_one({'_id': 'portfolio'})
+    total = doc.get('total', 0)
+    count = doc.get('count', 0)
+    avg   = round(total / count, 1) if count else 0
+    r = make_response(jsonify({'average': avg, 'count': count}))
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    return r
+
+@app.route('/api/rating', methods=['POST'])
+def submit_rating():
+    if rating_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    stars = (request.json or {}).get('stars')
+    if stars not in (1, 2, 3, 4, 5):
+        return jsonify({'error': 'stars must be 1-5'}), 400
+    rating_col.update_one(
+        {'_id': 'portfolio'},
+        {'$inc': {'total': stars, 'count': 1}},
+        upsert=True
+    )
+    doc = rating_col.find_one({'_id': 'portfolio'})
+    avg = round(doc['total'] / doc['count'], 1)
+    r = make_response(jsonify({'average': avg, 'count': doc['count']}))
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    return r
+
+# ============ MUSIC VOTE ============
+@app.route('/api/songs', methods=['GET', 'OPTIONS'])
+def get_songs():
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = '*'
+        r.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return r
+    if songs_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    songs = list(songs_col.find({}, {'_id': 1, 'title': 1, 'artist': 1, 'youtube_id': 1, 'votes': 1}).sort('votes', -1))
+    for s in songs:
+        s['id'] = str(s.pop('_id'))
+    r = make_response(jsonify({'songs': songs}))
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    return r
+
+@app.route('/api/songs/add', methods=['POST'])
+def add_song():
+    if songs_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    data = request.json
+    if not require_password(data):
+        return jsonify({'error': 'Unauthorized'}), 401
+    title      = data.get('title', '').strip()
+    artist     = data.get('artist', '').strip()
+    youtube_id = data.get('youtube_id', '').strip()
+    if not title or not youtube_id:
+        return jsonify({'error': 'title and youtube_id are required'}), 400
+    song_id = str(uuid.uuid4())
+    songs_col.insert_one({'_id': song_id, 'title': title, 'artist': artist, 'youtube_id': youtube_id, 'votes': 0, 'created_at': now_ist()})
+    return jsonify({'status': 'added', 'id': song_id})
+
+@app.route('/api/songs/vote', methods=['POST', 'OPTIONS'])
+def vote_song():
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = '*'
+        r.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return r
+    if songs_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    song_id = (request.json or {}).get('id')
+    if not song_id:
+        return jsonify({'error': 'id required'}), 400
+    result = songs_col.update_one({'_id': song_id}, {'$inc': {'votes': 1}})
+    if result.matched_count == 0:
+        return jsonify({'error': 'Song not found'}), 404
+    song = songs_col.find_one({'_id': song_id})
+    r = make_response(jsonify({'status': 'voted', 'votes': song['votes']}))
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    return r
+
+@app.route('/api/songs/delete', methods=['POST'])
+def delete_song():
+    if songs_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    data = request.json
+    if not require_password(data):
+        return jsonify({'error': 'Unauthorized'}), 401
+    song_id = data.get('id')
+    songs_col.delete_one({'_id': song_id})
+    return jsonify({'status': 'deleted'})
 
 if __name__ == '__main__':
-    init_db()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)

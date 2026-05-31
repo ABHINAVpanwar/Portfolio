@@ -12,10 +12,557 @@
     />
     <!-- Google Fonts -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../STYLE/skills.css" />
+    <style>
+      /* ====== ORIGINAL CSS (skills.css) FULLY PRESERVED ====== */
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap");
+
+      :root {
+        --primary: #4caf50;
+        --secondary: #353535;
+        --dark: #121212;
+        --light: #ffffff;
+        --accent: #4caf50;
+        --text: #000000;
+        --html: #e34c26;
+        --css: #2965f1;
+        --js: #f0db4f;
+        --c: #5e97d0;
+        --cpp: #00599c;
+        --py: #3776ab;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        font-size: 62.5%;
+        cursor: default;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background-color: var(--primary);
+        color: var(--light);
+        overflow-x: hidden;
+      }
+
+      header {
+        position: absolute;
+        background-color: transparent;
+        width: 100%;
+        top: 0;
+        left: 0;
+        padding: 3rem 5rem;
+        z-index: 99999;
+      }
+
+      nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      nav ul {
+        list-style: none;
+        display: flex;
+        gap: 2rem;
+      }
+
+      nav a {
+        font-size: 2rem;
+        text-decoration: none;
+      }
+
+      #logo {
+        font-weight: 700;
+        color: var(--light);
+      }
+
+      nav ul a {
+        font-weight: 600;
+        color: var(--light);
+        transition: all 0.3s ease;
+      }
+
+      nav ul a:hover {
+        color: var(--light);
+        text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+        border-bottom: 2px solid white;
+      }
+
+      #blink {
+        color: var(--light);
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+        animation: blink 2s infinite, pulse 1.5s infinite alternate;
+      }
+
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+      }
+      @keyframes pulse {
+        from { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+        to { text-shadow: 0 0 15px rgba(255, 255, 255, 0.8); }
+      }
+
+      #ham-menu {
+        display: none;
+        color: var(--light);
+        cursor: pointer;
+      }
+
+      @media only screen and (max-width: 991px) {
+        header { padding: 2.2rem 5rem; }
+        nav a { font-size: 2rem; }
+      }
+      @media only screen and (max-width: 767px) {
+        header { position: absolute; }
+        #ham-menu { display: block; }
+        nav a#logo, #ham-menu { font-size: 3.2rem; }
+        nav ul {
+          background: transparent;
+          position: fixed;
+          top: 80px;
+          left: -100vw;
+          width: 100vw;
+          height: calc(100vh - 80px);
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          transition: 1s;
+          gap: 10rem;
+          z-index: 99999;
+        }
+        nav ul.active { left: 0; }
+        nav a { font-size: 3rem; }
+      }
+      @media only screen and (max-width: 575px) {
+        header { padding: 2rem 3rem; }
+        nav ul { top: 80px; height: calc(100vh - 80px); }
+        nav a { font-size: 3rem; gap: 2rem; }
+      }
+      @media screen and (min-width: 1400px) {
+        header { padding: 4rem 7rem; }
+        nav a { font-size: 3rem; margin-left: 7px; margin-right: 7px; }
+      }
+
+      #main-content {
+        min-height: 100vh;
+        padding-top: 100px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      #particles-js {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: -1;
+      }
+
+      /* Skills Section */
+      #skills-section {
+        padding: 50px 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .section-title {
+        text-align: center;
+        font-size: 4rem;
+        margin-bottom: 50px;
+        position: relative;
+        display: inline-block;
+        left: 50%;
+        transform: translateX(-50%);
+        color: var(--light);
+      }
+
+      .section-title::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 4px;
+        bottom: -10px;
+        left: 0;
+        background: linear-gradient(90deg, black, black);
+        border-radius: 2px;
+        transform: scaleX(0);
+        transform-origin: left;
+        animation: titleUnderline 1.5s ease-in-out forwards;
+      }
+
+      @keyframes titleUnderline {
+        to { transform: scaleX(1); }
+      }
+
+      .skills-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        margin-top: 50px;
+      }
+
+      .skill-card {
+        background: var(--dark);
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        color: var(--light);
+      }
+
+      .skill-card:hover {
+        color: var(--dark);
+        background: var(--light);
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+      }
+
+      .skill-icon {
+        font-size: 5rem;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        color: var(--light);
+      }
+
+      .skill-card:hover .skill-icon {
+        transform: scale(1.1);
+      }
+
+      .skill-card:hover .skill-description {
+        color: black;
+      }
+
+      .skill-name {
+        font-size: 2.2rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+      }
+
+      .skill-level {
+        height: 8px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        margin-bottom: 20px;
+        overflow: hidden;
+      }
+
+      .skill-level-bar {
+        height: 100%;
+        border-radius: 4px;
+        background-color: var(--light);
+        transition: width 1.5s ease-in-out;
+      }
+
+      .skill-description {
+        font-size: 1.4rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 15px;
+      }
+
+      .skill-projects {
+        font-size: 1.2rem;
+        color: var(--primary);
+        font-style: italic;
+      }
+
+      .floating-elements {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        z-index: -1;
+        overflow: hidden;
+      }
+
+      .floating-element {
+        position: absolute;
+        opacity: 0.1;
+        animation: float 15s infinite linear;
+      }
+
+      @keyframes float {
+        0% { transform: translateY(0) rotate(0deg); }
+        100% { transform: translateY(-1000px) rotate(720deg); }
+      }
+
+      @media only screen and (max-width: 991px) {
+        .skills-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+      }
+      @media only screen and (max-width: 767px) {
+        .section-title { font-size: 3rem; }
+      }
+      @media only screen and (max-width: 575px) {
+        .skill-card { padding: 20px; }
+        .skill-name { font-size: 2rem; }
+      }
+      @media screen and (min-width: 1400px) {
+        .section-title { font-size: 6rem; }
+        .skill-card { padding: 30px; }
+        .skill-name { font-size: 4rem; }
+        .skills-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+      }
+
+      /* ====== ADDITIONAL GITHUB WIDGETS STYLES (MATCHES EXISTING PATTERN) ====== */
+      .github-showcase {
+        margin-top: 70px;
+        position: relative;
+        z-index: 2;
+      }
+
+      .github-header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .github-header h2 {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--light);
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(0,0,0,0.3);
+        padding: 0.8rem 2rem;
+        border-radius: 60px;
+        backdrop-filter: blur(4px);
+        letter-spacing: 1px;
+      }
+
+      .github-header h2 i {
+        font-size: 2.8rem;
+        color: var(--light);
+      }
+
+      .github-widgets-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 20px;
+      }
+
+      /* widget cards inheriting .skill-card style but distinct class */
+      .github-widget-card {
+        background: var(--dark);
+        border-radius: 15px;
+        padding: 0;
+        text-align: center;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        color: var(--light);
+        flex: 1;
+        min-width: 260px;
+        max-width: 320px;
+        overflow: hidden;
+      }
+
+      .github-widget-card:hover {
+        transform: translateY(-8px);
+        background: var(--light);
+        color: var(--dark);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+      }
+
+      .github-widget-card:hover .widget-header i,
+      .github-widget-card:hover .widget-header span,
+      .github-widget-card:hover .username,
+      .github-widget-card:hover .stat-number,
+      .github-widget-card:hover .stat-label,
+      .github-widget-card:hover .bio-text,
+      .github-widget-card:hover .repo-list a,
+      .github-widget-card:hover .repo-list li {
+        color: var(--dark);
+      }
+
+      .github-widget-card:hover .github-profile-link {
+        background: var(--dark);
+        color: var(--light);
+        border-color: var(--dark);
+      }
+
+      .widget-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 1.2rem 1rem 0.8rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        font-weight: 600;
+      }
+
+      .widget-header i {
+        font-size: 2rem;
+        color: var(--primary);
+      }
+
+      .widget-header span {
+        font-size: 1.6rem;
+        font-weight: 600;
+      }
+
+      .widget-content {
+        padding: 1.5rem 1.2rem 1.8rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .avatar-img {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        border: 3px solid var(--primary);
+        object-fit: cover;
+        margin-bottom: 12px;
+        background: #2c2c2c;
+      }
+
+      .username {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 5px 0;
+      }
+
+      .bio-text {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin: 8px 0;
+        max-width: 260px;
+      }
+
+      .github-stats {
+        display: flex;
+        justify-content: space-around;
+        width: 100%;
+        gap: 12px;
+        margin: 15px 0;
+      }
+
+      .stat {
+        background: rgba(76, 175, 80, 0.2);
+        border-radius: 30px;
+        padding: 6px 12px;
+        flex: 1;
+        text-align: center;
+        transition: 0.2s;
+      }
+
+      .github-widget-card:hover .stat {
+        background: rgba(76, 175, 80, 0.4);
+      }
+
+      .stat-number {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--primary);
+      }
+
+      .stat-label {
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .repo-list {
+        list-style: none;
+        width: 100%;
+        margin: 10px 0;
+      }
+
+      .repo-list li {
+        font-size: 1.2rem;
+        padding: 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+        border-bottom: 0.5px solid rgba(255, 255, 255, 0.15);
+      }
+
+      .repo-list i {
+        color: var(--primary);
+        font-size: 1.1rem;
+      }
+
+      .repo-list a {
+        color: var(--light);
+        text-decoration: none;
+        font-weight: 500;
+        transition: 0.2s;
+      }
+
+      .github-widget-card:hover .repo-list a {
+        color: var(--dark);
+      }
+
+      .repo-list a:hover {
+        text-decoration: underline;
+        color: var(--primary);
+      }
+
+      .github-profile-link {
+        margin-top: 12px;
+        display: inline-block;
+        background: rgba(76, 175, 80, 0.2);
+        padding: 0.6rem 1.6rem;
+        border-radius: 40px;
+        color: var(--light);
+        text-decoration: none;
+        font-size: 1.2rem;
+        font-weight: 500;
+        border: 1px solid rgba(76, 175, 80, 0.6);
+        transition: all 0.2s;
+      }
+
+      .github-profile-link:hover {
+        background: var(--primary);
+        color: var(--dark);
+        transform: scale(1.02);
+      }
+
+      .error-placeholder {
+        text-align: center;
+        padding: 2rem;
+      }
+
+      .fa-spinner {
+        color: var(--primary);
+      }
+
+      @media (max-width: 800px) {
+        .github-widgets-grid {
+          flex-direction: column;
+          align-items: center;
+        }
+        .github-widget-card {
+          max-width: 360px;
+          width: 100%;
+        }
+        .github-header h2 {
+          font-size: 2.2rem;
+        }
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -35,62 +582,13 @@
       <!-- Animated Background -->
       <div id="particles-js"></div>
 
-      <!-- Floating Elements -->
+      <!-- Floating Elements (original floating symbols) -->
       <div class="floating-elements">
-        <div
-          class="floating-element"
-          style="left: 10%; top: 20%; font-size: 3rem; animation-duration: 20s"
-        >
-          &lt;/&gt;
-        </div>
-        <div
-          class="floating-element"
-          style="
-            left: 25%;
-            top: 50%;
-            font-size: 4rem;
-            animation-duration: 25s;
-            animation-delay: -5s;
-          "
-        >
-          { }
-        </div>
-        <div
-          class="floating-element"
-          style="
-            left: 50%;
-            top: 30%;
-            font-size: 3.5rem;
-            animation-duration: 18s;
-            animation-delay: -8s;
-          "
-        >
-          #
-        </div>
-        <div
-          class="floating-element"
-          style="
-            left: 70%;
-            top: 60%;
-            font-size: 5rem;
-            animation-duration: 22s;
-            animation-delay: -3s;
-          "
-        >
-          *
-        </div>
-        <div
-          class="floating-element"
-          style="
-            left: 85%;
-            top: 25%;
-            font-size: 3rem;
-            animation-duration: 17s;
-            animation-delay: -10s;
-          "
-        >
-          &gt;
-        </div>
+        <div class="floating-element" style="left: 10%; top: 20%; font-size: 3rem; animation-duration: 20s">&lt;/&gt;</div>
+        <div class="floating-element" style="left: 25%; top: 50%; font-size: 4rem; animation-duration: 25s; animation-delay: -5s">{ }</div>
+        <div class="floating-element" style="left: 50%; top: 30%; font-size: 3.5rem; animation-duration: 18s; animation-delay: -8s">#</div>
+        <div class="floating-element" style="left: 70%; top: 60%; font-size: 5rem; animation-duration: 22s; animation-delay: -3s">*</div>
+        <div class="floating-element" style="left: 85%; top: 25%; font-size: 3rem; animation-duration: 17s; animation-delay: -10s">&gt;</div>
       </div>
 
       <!-- Skills Section -->
@@ -102,137 +600,185 @@
           <div class="skill-card">
             <i class="fab fa-html5 skill-icon" style="color: var(--html)"></i>
             <h3 class="skill-name">HTML5</h3>
-            <div class="skill-level">
-              <div
-                class="skill-level-bar"
-                style="width: 90%; background: var(--html)"
-              ></div>
-            </div>
-            <p class="skill-description">
-              Semantic markup, accessibility, SEO optimization, and modern HTML5
-              features.
-            </p>
+            <div class="skill-level"><div class="skill-level-bar" style="width: 90%; background: var(--html)"></div></div>
+            <p class="skill-description">Semantic markup, accessibility, SEO optimization, and modern HTML5 features.</p>
             <p class="skill-projects">Used in 20+ projects</p>
           </div>
-
           <div class="skill-card">
             <i class="fab fa-css3-alt skill-icon" style="color: var(--css)"></i>
             <h3 class="skill-name">CSS3</h3>
-            <div class="skill-level">
-              <div
-                class="skill-level-bar"
-                style="width: 85%; background: var(--css)"
-              ></div>
-            </div>
-            <p class="skill-description">
-              Flexbox, Grid, animations, transitions, and responsive design
-              principles.
-            </p>
+            <div class="skill-level"><div class="skill-level-bar" style="width: 85%; background: var(--css)"></div></div>
+            <p class="skill-description">Flexbox, Grid, animations, transitions, and responsive design principles.</p>
             <p class="skill-projects">Used in 20+ projects</p>
           </div>
-
           <div class="skill-card">
             <i class="fab fa-js skill-icon" style="color: var(--js)"></i>
             <h3 class="skill-name">JavaScript</h3>
-            <div class="skill-level">
-              <div
-                class="skill-level-bar"
-                style="width: 80%; background: var(--js)"
-              ></div>
-            </div>
-            <p class="skill-description">
-              ES6+, DOM manipulation, async programming, and modern frameworks.
-            </p>
+            <div class="skill-level"><div class="skill-level-bar" style="width: 80%; background: var(--js)"></div></div>
+            <p class="skill-description">ES6+, DOM manipulation, async programming, and modern frameworks.</p>
             <p class="skill-projects">Used in 20+ projects</p>
           </div>
-
+          <div class="skill-card">
+            <i class="fab fa-angular skill-icon" style="color: #dd0031"></i>
+            <h3 class="skill-name">Angular</h3>
+            <div class="skill-level"><div class="skill-level-bar" style="width: 60%; background: #dd0031"></div></div>
+            <p class="skill-description">Component-based architecture, TypeScript, RxJS, and single-page applications.</p>
+            <p class="skill-projects">Used in 3+ projects</p>
+          </div>
+          <div class="skill-card">
+            <i class="fas fa-leaf skill-icon" style="color: #6db33f"></i>
+            <h3 class="skill-name">Spring Boot</h3>
+            <div class="skill-level"><div class="skill-level-bar" style="width: 60%; background: #6db33f"></div></div>
+            <p class="skill-description">REST APIs, dependency injection, JPA, and microservices with Spring ecosystem.</p>
+            <p class="skill-projects">Used in 3+ projects</p>
+          </div>
           <div class="skill-card">
             <i class="fas fa-flask skill-icon" style="color: #000000"></i>
             <h3 class="skill-name">Flask</h3>
-            <div class="skill-level">
-              <div
-                class="skill-level-bar"
-                style="width: 70%; background: #000000"
-              ></div>
-            </div>
-            <p class="skill-description">
-              Python web framework, REST APIs, Jinja templating, and backend
-              development.
-            </p>
+            <div class="skill-level"><div class="skill-level-bar" style="width: 70%; background: #000000"></div></div>
+            <p class="skill-description">Python web framework, REST APIs, Jinja templating, and backend development.</p>
             <p class="skill-projects">Used in 5+ projects</p>
           </div>
-
           <div class="skill-card">
             <i class="fas fa-copyright skill-icon" style="color: var(--c)"></i>
             <h3 class="skill-name">C Programming</h3>
-            <div class="skill-level">
-              <div
-                class="skill-level-bar"
-                style="width: 75%; background: var(--c)"
-              ></div>
-            </div>
-            <p class="skill-description">
-              Data structures, algorithms, memory management, and system
-              programming.
-            </p>
+            <div class="skill-level"><div class="skill-level-bar" style="width: 75%; background: var(--c)"></div></div>
+            <p class="skill-description">Data structures, algorithms, memory management, and system programming.</p>
             <p class="skill-projects">Used in 5+ projects</p>
           </div>
-
           <div class="skill-card">
-            <i
-              class="fas fa-plus-circle skill-icon"
-              style="color: var(--cpp)"
-            ></i>
+            <i class="fas fa-plus-circle skill-icon" style="color: var(--cpp)"></i>
             <h3 class="skill-name">C++</h3>
-            <div class="skill-level">
-              <div
-                class="skill-level-bar"
-                style="width: 70%; background: var(--cpp)"
-              ></div>
-            </div>
-            <p class="skill-description">
-              OOP concepts, STL, templates, and performance optimization
-              techniques.
-            </p>
+            <div class="skill-level"><div class="skill-level-bar" style="width: 70%; background: var(--cpp)"></div></div>
+            <p class="skill-description">OOP concepts, STL, templates, and performance optimization techniques.</p>
             <p class="skill-projects">Used in 5+ projects</p>
           </div>
-
+          <div class="skill-card">
+            <i class="fab fa-java skill-icon" style="color: #f89820"></i>
+            <h3 class="skill-name">Java</h3>
+            <div class="skill-level"><div class="skill-level-bar" style="width: 70%; background: #f89820"></div></div>
+            <p class="skill-description">OOP, collections, multithreading, and enterprise application development.</p>
+            <p class="skill-projects">Used in 5+ projects</p>
+          </div>
           <div class="skill-card">
             <i class="fab fa-python skill-icon" style="color: var(--py)"></i>
             <h3 class="skill-name">Python</h3>
-            <div class="skill-level">
-              <div
-                class="skill-level-bar"
-                style="width: 75%; background: var(--py)"
-              ></div>
-            </div>
-            <p class="skill-description">
-              Scripting, automation, data analysis, and basic machine learning
-              concepts.
-            </p>
+            <div class="skill-level"><div class="skill-level-bar" style="width: 75%; background: var(--py)"></div></div>
+            <p class="skill-description">Scripting, automation, data analysis, and basic machine learning concepts.</p>
             <p class="skill-projects">Used in 10+ projects</p>
           </div>
-
           <div class="skill-card">
             <i class="fas fa-database skill-icon" style="color: #00758f"></i>
             <h3 class="skill-name">SQL</h3>
-            <div class="skill-level">
-              <div
-                class="skill-level-bar"
-                style="width: 65%; background: #00758f"
-              ></div>
-            </div>
-            <p class="skill-description">
-              Database design, queries, joins, transactions, and optimization.
-            </p>
+            <div class="skill-level"><div class="skill-level-bar" style="width: 65%; background: #00758f"></div></div>
+            <p class="skill-description">Database design, queries, joins, transactions, and optimization.</p>
             <p class="skill-projects">Used in 5+ projects</p>
+          </div>
+        </div>
+
+        <!-- ========== GITHUB WIDGETS SECTION: ABHINAVpanwar ========== -->
+        <div class="github-showcase" id="githubSection">
+          <div class="github-header">
+            <h2><i class="fab fa-github"></i> GitHub · ABHINAVpanwar</h2>
+          </div>
+          <div id="githubWidgetsContainer" class="github-widgets-grid">
+            <!-- Loading state -->
+            <div class="github-widget-card" style="justify-content: center; display: flex; align-items: center; padding: 30px;">
+              <i class="fas fa-spinner fa-pulse" style="font-size: 2.5rem; color: var(--primary);"></i>
+              <p style="margin-top: 12px; font-size: 1.2rem;">Fetching GitHub profile...</p>
+            </div>
           </div>
         </div>
       </section>
     </main>
+    <script>
+      // GitHub API fetch for ABHINAVpanwar
+      const GITHUB_USER = "ABHINAVpanwar";
 
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-    <script src="../SCRIPT/skills.js"></script>
-    <script src="../SCRIPT/users.js"></script>
+      async function loadGitHubWidgets() {
+        const container = document.getElementById('githubWidgetsContainer');
+        if (!container) return;
+        try {
+          const [userRes, reposRes] = await Promise.all([
+            fetch(`https://api.github.com/users/${GITHUB_USER}`),
+            fetch(`https://api.github.com/users/${GITHUB_USER}/repos?per_page=5&sort=updated&direction=desc`)
+          ]);
+          
+          if (!userRes.ok) throw new Error(`GitHub user not found (${userRes.status})`);
+          const user = await userRes.json();
+          const repos = reposRes.ok ? await reposRes.json() : [];
+
+          const avatar = user.avatar_url || "";
+          const name = user.name || GITHUB_USER;
+          const bio = user.bio || "Developer & open source enthusiast";
+          const publicRepos = user.public_repos || 0;
+          const followers = user.followers || 0;
+          const following = user.following || 0;
+          const profileUrl = user.html_url;
+          const joinedDate = user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : "unknown";
+
+          // Create three matching cards (stats, repos, activity)
+          container.innerHTML = `
+            <div class="github-widget-card">
+              <div class="widget-header"><i class="fab fa-github-alt"></i><span>Profile</span></div>
+              <div class="widget-content">
+                <img class="avatar-img" src="${avatar}" alt="${GITHUB_USER}" onerror="this.src='https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'">
+                <div class="username">${name}</div>
+                <div class="bio-text">${bio.length > 65 ? bio.substring(0, 62)+'...' : bio}</div>
+                <div class="github-stats">
+                  <div class="stat"><div class="stat-number">${publicRepos}</div><div class="stat-label">Repos</div></div>
+                  <div class="stat"><div class="stat-number">${followers}</div><div class="stat-label">Followers</div></div>
+                  <div class="stat"><div class="stat-number">${following}</div><div class="stat-label">Following</div></div>
+                </div>
+                <a href="${profileUrl}" target="_blank" class="github-profile-link"><i class="fab fa-github"></i> @${GITHUB_USER}</a>
+              </div>
+            </div>
+
+            <div class="github-widget-card">
+              <div class="widget-header"><i class="fas fa-code-branch"></i><span>Recent Repos</span></div>
+              <div class="widget-content">
+                <ul class="repo-list">
+                  ${repos.slice(0, 4).map(repo => `
+                    <li><i class="fas fa-book"></i> <a href="${repo.html_url}" target="_blank">${repo.name}</a> ${repo.language ? `<span style="font-size:1rem; background:rgba(76,175,80,0.2); padding:2px 8px; border-radius:50px;">${repo.language}</span>` : ''}</li>
+                  `).join('')}
+                  ${repos.length === 0 ? '<li><i class="fas fa-folder-open"></i> No public repos</li>' : ''}
+                </ul>
+                <a href="${profileUrl}?tab=repositories" target="_blank" class="github-profile-link">Explore all →</a>
+              </div>
+            </div>
+
+            <div class="github-widget-card">
+              <div class="widget-header"><i class="fas fa-chart-line"></i><span>Activity</span></div>
+              <div class="widget-content">
+                <div class="github-stats">
+                  <div class="stat"><div class="stat-number">⭐</div><div class="stat-label">Stars earned</div></div>
+                  <div class="stat"><div class="stat-number">🚀</div><div class="stat-label">Active coder</div></div>
+                </div>
+                <div style="margin: 10px 0; font-size:1.2rem;"><i class="fas fa-calendar-alt"></i> Joined ${joinedDate}</div>
+                <div style="font-size:1.1rem; background: rgba(76,175,80,0.15); border-radius: 40px; padding: 5px 12px; margin-top: 8px;">
+                  <i class="fas fa-map-marker-alt"></i> ${user.location || 'Global'}
+                </div>
+                <a href="https://github.com/sponsors/${GITHUB_USER}" target="_blank" class="github-profile-link" style="margin-top: 18px;"><i class="fas fa-heart"></i> Sponsor</a>
+              </div>
+            </div>
+          `;
+        } catch (err) {
+          console.error(err);
+          container.innerHTML = `
+            <div class="github-widget-card" style="grid-column:1/-1; text-align:center; padding: 2rem; max-width: 500px;">
+              <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ffaa66;"></i>
+              <h3 style="margin: 12px 0; font-size: 1.8rem;">GitHub data unavailable</h3>
+              <p style="font-size: 1.2rem;">Rate limit or user "ABHINAVpanwar" may be private.</p>
+              <a href="https://github.com/ABHINAVpanwar" target="_blank" class="github-profile-link" style="margin-top: 15px;">Visit profile →</a>
+            </div>
+          `;
+        }
+      }
+
+      loadGitHubWidgets();
+    </script>
+    <!-- External scripts references kept (optional) -->
+    <script src="../SCRIPT/skills.js" defer></script>
+    <script src="../SCRIPT/users.js" defer></script>
   </body>
 </html>

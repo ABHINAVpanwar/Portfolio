@@ -203,7 +203,7 @@ nav ul.active {
   width: 250px;
   border: 3px solid white;
   border-radius: 250px;
-  background-image: url("../IMG/profile.jpg");
+  background-image: url("../IMG/profileUS.jpg");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -273,6 +273,20 @@ nav ul.active {
   font-weight: bold;
 }
 
+.skill-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skill-pct {
+  font-size: 13px;
+  color: #4caf50;
+  font-weight: 700;
+  min-width: 36px;
+  text-align: right;
+}
+
 .bar-container {
   background-color: #f2f2f2;
   height: 20px;
@@ -280,6 +294,16 @@ nav ul.active {
   border-radius: 10px;
   margin-top: 15px;
   margin-bottom: 15px;
+  cursor: ew-resize;
+  user-select: none;
+}
+
+#scores-hint {
+  margin-top: 10px;
+  font-size: 11px;
+  color: #555;
+  text-align: center;
+  letter-spacing: 0.3px;
 }
 
 .bar {
@@ -649,6 +673,8 @@ nav ul.active {
     border-radius: 12px;
     margin-top: 22px;
     margin-bottom: 22px;
+    cursor: ew-resize;
+    user-select: none;
   }
   .bar {
     width: 0;
@@ -1000,6 +1026,15 @@ nav ul.active {
     cursor: pointer;
     font-size: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+  #music-btn {
+    bottom: 20px;
+    left: 20px;
+  }
+  #music-panel {
+    bottom: 80px;
+    left: 10px;
+    width: calc(100vw - 20px);
   }
   #chat-container {
     bottom: 10vh;

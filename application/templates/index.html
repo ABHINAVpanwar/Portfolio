@@ -193,6 +193,7 @@
   <body>
     <header>
       <h1>Server</h1>
+      <a href="/logout" style="display:inline-block;margin-top:0.5rem;padding:0.4rem 1rem;background:#f44336;color:#fff;border-radius:6px;text-decoration:none;font-size:0.85rem;">Logout</a>
     </header>
 
     <div class="container">
@@ -465,7 +466,310 @@
           color: white;
         }
       </style>
+      <!-- User Logs -->
+      <div class="card">
+        <h2>User Logs</h2>
+
+        <!-- Filter + Refresh -->
+        <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+          <select id="log-filter" style="flex:1; min-width:120px;">
+            <option value="">All Events</option>
+            <option value="site_visit">Site Visit</option>
+            <option value="login">Login</option>
+            <option value="login_failed">Login Failed</option>
+            <option value="message">Message</option>
+            <option value="file_send">File Send</option>
+          </select>
+          <button id="refresh-logs" class="secondary" style="white-space:nowrap;">Refresh</button>
+          <button id="clear-logs" class="danger" style="white-space:nowrap;">Clear All</button>
+        </div>
+
+        <!-- Log count -->
+        <div id="log-count" style="font-size:0.8rem; color:#888; margin-bottom:8px;">Loading...</div>
+
+        <!-- Logs container -->
+        <div id="logs-container" style="max-height:400px; overflow-y:auto; background:#2a2a2a; border-radius:6px; padding:8px;">
+          <div style="text-align:center; color:#888; padding:20px;">Loading logs...</div>
+        </div>
+      </div>
+
+      <style>
+        #logs-container::-webkit-scrollbar { width:6px; }
+        #logs-container::-webkit-scrollbar-track { background:#1a1a1a; border-radius:3px; }
+        #logs-container::-webkit-scrollbar-thumb { background:#444; border-radius:3px; }
+        .log-entry { padding:8px; border-bottom:1px solid #333; font-size:0.82rem; }
+        .log-entry:last-child { border-bottom:none; }
+        .log-badge { display:inline-block; padding:2px 7px; border-radius:4px; font-size:0.7rem; font-weight:600; margin-right:6px; }
+        .badge-site_visit    { background:#37474f; color:#90a4ae; }
+        .badge-login         { background:#1b5e20; color:#a5d6a7; }
+        .badge-login_failed  { background:#b71c1c; color:#ef9a9a; }
+        .badge-message       { background:#0d47a1; color:#90caf9; }
+        .badge-file_send     { background:#4a148c; color:#ce93d8; }
+      </style>
+
+      <script>
+        (function () {
+          const API = window.location.origin;
+
+          async function loadLogs() {
+            const filter = document.getElementById('log-filter').value;
+            const url = filter
+              ? `${API}/api/logs?event=${filter}&limit=100`
+              : `${API}/api/logs?limit=100`;
+
+            const container = document.getElementById('logs-container');
+            const countEl   = document.getElementById('log-count');
+            container.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Loading...</div>';
+
+            try {
+              const res  = await fetch(url, { headers: { 'X-Admin-Token': window._adminToken || '' } });
+              const data = await res.json();
+              const logs = data.logs || [];
+
+              countEl.textContent = `${logs.length} log${logs.length !== 1 ? 's' : ''} shown`;
+
+              if (!logs.length) {
+                container.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">No logs found</div>';
+                return;
+              }
+
+              container.innerHTML = logs.map(log => {
+                const badge = `<span class="log-badge badge-${log.event}">${log.event}</span>`;
+                const ip    = `<span style="font-family:monospace;color:#aaa;">${log.ip_address || '?'}</span>`;
+                const time  = `<span style="color:#555;float:right;">${log.timestamp || ''}</span>`;
+                const device = log.device_type ? `<span style="color:#666;font-size:0.75rem;"> · ${log.device_type}</span>` : '';
+
+                let extra = '';
+                if (log.username)  extra += `<div style="color:#ccc;margin-top:3px;">👤 ${log.username}</div>`;
+                if (log.message)   extra += `<div style="color:#90caf9;margin-top:3px;">💬 ${log.message}</div>`;
+                if (log.file_name) extra += `<div style="color:#ce93d8;margin-top:3px;">📎 ${log.file_name} <span style="color:#666;">(${log.file_type || ''})</span></div>`;
+                if (log.page)      extra += `<div style="color:#555;font-size:0.75rem;margin-top:2px;">📄 ${log.page}</div>`;
+
+                return `<div class="log-entry">${time}${badge}${ip}${device}${extra}</div>`;
+              }).join('');
+
+            } catch (e) {
+              container.innerHTML = '<div style="text-align:center;color:var(--error-color);padding:20px;">Error loading logs</div>';
+            }
+          }
+
+          async function clearLogs() {
+            if (!confirm('Delete ALL user logs? This cannot be undone.')) return;
+            const pwd = document.getElementById('current-password').textContent.trim();
+            try {
+              await fetch(`${API}/api/logs/clear`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pwd })
+              });
+              loadLogs();
+            } catch (e) {
+              alert('Failed to clear logs');
+            }
+          }
+
+          document.getElementById('refresh-logs').addEventListener('click', loadLogs);
+          document.getElementById('clear-logs').addEventListener('click', clearLogs);
+          document.getElementById('log-filter').addEventListener('change', loadLogs);
+
+          loadLogs();
+        })();
+      </script>
+
+      <!-- Song Management -->
+      <div class="card">
+        <h2>Music Vote</h2>
+        <div id="songs-list" style="margin-bottom:14px;"></div>
+        <form id="songForm">
+          <div class="form-group">
+            <label for="song_title">Song Title</label>
+            <input type="text" id="song_title" placeholder="e.g. Blinding Lights" required />
+          </div>
+          <div class="form-group">
+            <label for="song_artist">Artist</label>
+            <input type="text" id="song_artist" placeholder="e.g. The Weeknd" />
+          </div>
+          <div class="form-group">
+            <label for="song_yt">YouTube URL or Video ID</label>
+            <input type="text" id="song_yt" placeholder="https://youtube.com/watch?v=... or video ID" required />
+          </div>
+          <button type="submit" class="secondary">Add Song</button>
+        </form>
+        <div id="song-status" class="status-message hidden"></div>
+      </div>
+
+      <script>
+        (function () {
+          const API = window.location.origin;
+
+          function extractYtId(val) {
+            const m = val.match(/(?:v=|youtu\.be\/|embed\/)([\w\-]{11})/);
+            return m ? m[1] : val.trim();
+          }
+
+          async function loadSongs() {
+            const res  = await fetch(`${API}/api/songs`);
+            const data = await res.json();
+            const songs = data.songs || [];
+            const container = document.getElementById('songs-list');
+            if (!songs.length) {
+              container.innerHTML = '<div style="color:#555;font-size:0.85rem;">No songs added yet</div>';
+              return;
+            }
+            container.innerHTML = songs.map(s => `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#2a2a2a;border-radius:6px;margin-bottom:6px;">
+                <div>
+                  <div style="font-size:0.9rem;font-weight:600;color:#fff;">${s.title}</div>
+                  <div style="font-size:0.75rem;color:#888;">${s.artist || ''} &nbsp;·&nbsp; <span style="color:#4caf50;">▲ ${s.votes}</span></div>
+                </div>
+                <button class="danger" style="padding:4px 10px;font-size:0.8rem;" onclick="deleteSong('${s.id}')">Remove</button>
+              </div>`).join('');
+          }
+
+          window.deleteSong = async function (id) {
+            const pwd = document.getElementById('current-password').textContent.trim();
+            await fetch(`${API}/api/songs/delete`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id, password: pwd })
+            });
+            loadSongs();
+          };
+
+          document.getElementById('songForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pwd    = document.getElementById('current-password').textContent.trim();
+            const title  = document.getElementById('song_title').value.trim();
+            const artist = document.getElementById('song_artist').value.trim();
+            const ytRaw  = document.getElementById('song_yt').value.trim();
+            const ytId   = extractYtId(ytRaw);
+            const status = document.getElementById('song-status');
+            try {
+              const res = await fetch(`${API}/api/songs/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, artist, youtube_id: ytId, password: pwd })
+              });
+              if (!res.ok) throw new Error();
+              document.getElementById('song_title').value  = '';
+              document.getElementById('song_artist').value = '';
+              document.getElementById('song_yt').value     = '';
+              status.textContent = 'Song added!';
+              status.className = 'success status-message';
+              status.classList.remove('hidden');
+              setTimeout(() => status.classList.add('hidden'), 3000);
+              loadSongs();
+            } catch {
+              status.textContent = 'Failed to add song';
+              status.className = 'error status-message';
+              status.classList.remove('hidden');
+              setTimeout(() => status.classList.add('hidden'), 3000);
+            }
+          });
+
+          loadSongs();
+        })();
+      </script>
+
+      <!-- Add this to your Render server's HTML page -->
+      <div class="card">
+        <h2>Site Control</h2>
+        <div id="netlifyStatus" class="current-value">Checking status...</div>
+        <div style="display: flex; gap: 10px; margin-top: 10px">
+          <button id="killNetlifyBtn" class="danger">
+            KILL
+          </button>
+          <button id="restoreNetlifyBtn" class="secondary">
+            RESTORE
+          </button>
+        </div>
+      </div>
+
+      <script>
+        // Control buttons for Netlify site (on your Render page)
+        const RENDER_API = window.location.origin;
+
+        async function getNetlifyStatus() {
+          try {
+            const response = await fetch(
+              `${RENDER_API}/api/netlify/kill-status`,
+            );
+            const data = await response.json();
+            const statusDiv = document.getElementById("netlifyStatus");
+            if (statusDiv) {
+              statusDiv.innerHTML = data.killed
+                ? "KILLED"
+                : "ACTIVE";
+              statusDiv.style.color = data.killed
+                ? "var(--error-color)"
+                : "var(--accent-color)";
+            }
+          } catch (error) {
+            console.error("Error:", error);
+          }
+        }
+
+        async function killNetlifySite() {
+          const password = document.getElementById('current-password').textContent.trim();
+          if (!password || password === 'Loading current password...') {
+            alert('Password not loaded yet, try again.');
+            return;
+          }
+          try {
+            const response = await fetch(`${RENDER_API}/api/netlify/kill`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ password }),
+            });
+            if (response.ok) {
+              getNetlifyStatus();
+            } else {
+              const d = await response.json();
+              alert('Failed: ' + (d.error || response.status));
+            }
+          } catch (error) {
+            alert("Error connecting to server");
+          }
+        }
+
+        async function restoreNetlifySite() {
+          const password = document.getElementById('current-password').textContent.trim();
+          if (!password || password === 'Loading current password...') {
+            alert('Password not loaded yet, try again.');
+            return;
+          }
+          try {
+            const response = await fetch(`${RENDER_API}/api/netlify/restore`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ password }),
+            });
+            if (response.ok) {
+              getNetlifyStatus();
+            } else {
+              const d = await response.json();
+              alert('Failed: ' + (d.error || response.status));
+            }
+          } catch (error) {
+            alert("Error connecting to server");
+          }
+        }
+
+        // Add event listeners
+        document
+          .getElementById("killNetlifyBtn")
+          ?.addEventListener("click", killNetlifySite);
+        document
+          .getElementById("restoreNetlifyBtn")
+          ?.addEventListener("click", restoreNetlifySite);
+
+        // Poll status every 5 seconds
+        getNetlifyStatus();
+        setInterval(getNetlifyStatus, 5000);
+      </script>
     </div>
+
+    <script>window._adminToken = {{ config['SECRET_KEY']|tojson }};</script>
     <script>
       document.addEventListener("DOMContentLoaded", async () => {
         // DOM Elements
@@ -573,44 +877,34 @@
         // Load current poll and results
         async function loadPoll() {
           try {
-            // Get current poll
-            const pollResponse = await fetchWithErrorHandling(
-              `${API_BASE}/api/current_poll`,
-            );
-
-            if (pollResponse.error || !pollResponse.question) {
+            const pollRes = await fetch(`${API_BASE}/api/current_poll`);
+            if (pollRes.status === 404) {
               pollStatus.textContent = "No active poll";
               pollOptions.classList.add("hidden");
               pollActions.classList.add("hidden");
               currentPollId = null;
               return;
             }
-
-            currentPollId = pollResponse.id;
+            const pollResponse = await pollRes.json();
+            if (!pollResponse.question) {
+              pollStatus.textContent = "No active poll";
+              pollOptions.classList.add("hidden");
+              pollActions.classList.add("hidden");
+              currentPollId = null;
+              return;
+            }
+            currentPollId = pollResponse.poll_id;
             pollStatus.textContent = pollResponse.question;
-
-            // Get poll results
-            const resultsResponse = await fetchWithErrorHandling(
-              `${API_BASE}/api/poll_results`,
-            );
-
-            // Display poll with results
+            const resultsResponse = await fetchWithErrorHandling(`${API_BASE}/api/poll_results`);
             pollOptions.innerHTML = pollResponse.options
               .map((option, index) => {
                 const voteCount = resultsResponse.results?.[index] || 0;
-                return `
-                        <div class="option-item">
-                            <span>${option}</span>
-                            <span class="vote-count">${voteCount} votes</span>
-                        </div>
-                    `;
-              })
-              .join("");
-
+                return `<div class="option-item"><span>${option}</span><span class="vote-count">${voteCount} votes</span></div>`;
+              }).join("");
             pollOptions.classList.remove("hidden");
             pollActions.classList.remove("hidden");
           } catch (error) {
-            pollStatus.textContent = "Error loading poll";
+            pollStatus.textContent = "No active poll";
             pollOptions.classList.add("hidden");
             pollActions.classList.add("hidden");
             console.error("Poll load error:", error);
@@ -642,14 +936,13 @@
           }
 
           try {
+            const pwd = document.getElementById("current-password").textContent.trim();
             const response = await fetchWithErrorHandling(
               `${API_BASE}/api/end_poll`,
               {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({}), // No need for poll_id since we're clearing all
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password: pwd }),
               },
             );
 
@@ -700,13 +993,12 @@
             return;
           }
 
+          const pwd = document.getElementById("current-password").textContent.trim();
           try {
             await fetchWithErrorHandling(`${API_BASE}/api/set_h3`, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ new_text: newHeadline }),
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ new_text: newHeadline, password: pwd }),
             });
 
             currentHeadline.textContent = newHeadline;
@@ -742,18 +1034,14 @@
             return;
           }
 
+          const pwd = document.getElementById("current-password").textContent.trim();
           try {
             const response = await fetchWithErrorHandling(
               `${API_BASE}/api/poll`,
               {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  question: question,
-                  options: options,
-                }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ question, options, password: pwd }),
               },
             );
 
@@ -787,15 +1075,14 @@
             return;
           }
 
+          const currentPwd = document.getElementById("current-password").textContent.trim();
           try {
             const response = await fetchWithErrorHandling(
               `${API_BASE}/set_password`,
               {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ new_password: newPassword }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ new_password: newPassword, password: currentPwd }),
               },
             );
 
@@ -845,14 +1132,14 @@
             return;
           }
 
+          const pwd = document.getElementById("current-password").textContent.trim();
           try {
             const response = await fetchWithErrorHandling(
               `${API_BASE}/clear_messages`,
               {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password: pwd }),
               },
             );
 

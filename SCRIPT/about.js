@@ -84,39 +84,121 @@ navLinks.forEach((navLinks) => {
 //   window.addEventListener("scroll", toggleStickyNav);
 // });
 
-// Function to animate the skill bar
-function increaseSkillBar(id, targetWidth) {
-  const bar = document.getElementById(id);
-  let width = 0;
+// ============ SKILL BARS — draggable + live DB ============
+const API = 'https://abhinavpanwar.onrender.com';
+const DEFAULT_SCORES = { F: 80, SM: 60, TM: 70, PS: 80, DM: 60, C: 70 };
+let saveTimers = {};
 
-  const interval = setInterval(function () {
-    if (width >= targetWidth) {
-      clearInterval(interval);
-    } else {
-      width++;
-      bar.style.width = width + "%";
-    }
-  }, 10); // Increase the value inside setTimeout for a faster/slower animation
+function setBar(id, value) {
+  const bar = document.getElementById(id);
+  const pct = document.getElementById('pct-' + id);
+  if (bar) bar.style.width = value + '%';
+  if (pct) pct.textContent = value + '%';
 }
 
-let skillBarsAnimated = true;
-
-function toggleSkillbar() {
-  if (skillBarsAnimated && window.pageYOffset > S1.offsetHeight * 1.5) {
-    increaseSkillBar("F", 80);
-    increaseSkillBar("SM", 60);
-    increaseSkillBar("TM", 70);
-    increaseSkillBar("PS", 80);
-    increaseSkillBar("DM", 60);
-    increaseSkillBar("C", 70);
-
-    skillBarsAnimated = false;
+async function loadScores() {
+  try {
+    const res  = await fetch(`${API}/api/scores`, { cache: 'no-store' });
+    const data = await res.json();
+    Object.keys(DEFAULT_SCORES).forEach(id => {
+      setBar(id, data[id] ?? DEFAULT_SCORES[id]);
+    });
+    const timeEl = document.getElementById('scores-time');
+    if (timeEl) timeEl.textContent = data.updated_at || '—';
+  } catch (e) {
+    Object.keys(DEFAULT_SCORES).forEach(id => setBar(id, DEFAULT_SCORES[id]));
   }
 }
 
-toggleSkillbar();
+function saveScore(skill, value) {
+  clearTimeout(saveTimers[skill]);
+  saveTimers[skill] = setTimeout(async () => {
+    try {
+      const res  = await fetch(`${API}/api/scores`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ skill, value })
+      });
+      const data = await res.json();
+      const timeEl = document.getElementById('scores-time');
+      if (timeEl && data.status === 'updated') timeEl.textContent = 'just now';
+    } catch (e) {}
+  }, 600);
+}
 
-window.addEventListener("scroll", toggleSkillbar);
+function getValueFromEvent(container, clientX) {
+  const rect  = container.getBoundingClientRect();
+  const ratio = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
+  return Math.round(ratio * 100);
+}
+
+document.querySelectorAll('.bar-container').forEach(container => {
+  const skill = container.dataset.skill;
+  let dragging = false;
+
+  function onMove(clientX) {
+    const val = getValueFromEvent(container, clientX);
+    setBar(skill, val);
+    saveScore(skill, val);
+  }
+
+  // Mouse
+  container.addEventListener('mousedown', e => {
+    dragging = true;
+    // disable transition during drag for instant feedback
+    document.getElementById(skill).style.transition = 'none';
+    onMove(e.clientX);
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    onMove(e.clientX);
+  });
+  window.addEventListener('mouseup', () => {
+    if (dragging) {
+      dragging = false;
+      document.getElementById(skill).style.transition = '';
+    }
+  });
+
+  // Touch
+  container.addEventListener('touchstart', e => {
+    dragging = true;
+    document.getElementById(skill).style.transition = 'none';
+    onMove(e.touches[0].clientX);
+  }, { passive: true });
+  window.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    onMove(e.touches[0].clientX);
+  }, { passive: true });
+  window.addEventListener('touchend', () => {
+    if (dragging) {
+      dragging = false;
+      document.getElementById(skill).style.transition = '';
+    }
+  });
+});
+
+// ── animate bars on scroll into view, using DB values ──
+let skillBarsAnimated = false;
+
+async function animateBars() {
+  if (skillBarsAnimated) return;
+  skillBarsAnimated = true;
+  await loadScores();
+}
+
+const shSection = document.getElementById('SH');
+if ('IntersectionObserver' in window) {
+  new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) animateBars();
+  }, { threshold: 0.2 }).observe(shSection);
+} else {
+  function toggleSkillbar() {
+    if (window.pageYOffset > document.getElementById('S1').offsetHeight * 1.5) animateBars();
+  }
+  toggleSkillbar();
+  window.addEventListener('scroll', toggleSkillbar);
+}
 
 let One = document.getElementById("exp");
 let Two = document.getElementById("edu");

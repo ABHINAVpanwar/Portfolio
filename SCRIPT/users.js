@@ -1,3 +1,35 @@
+(function () {
+  const e = "https://abhinavpanwar.onrender.com";
+  const t = document.createElement("div");
+  ((t.id = "killOverlay"),
+    (t.style.cssText =
+      "position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:999999;display:none;justify-content:center;align-items:center;font-family:monospace;font-size:24px;color:white;text-align:center;"),
+    (t.innerHTML = "404"),
+    document.body.appendChild(t));
+  function o() {
+    ((document.body.style.overflow = "hidden"),
+      (document.documentElement.style.overflow = "hidden"));
+  }
+  function n() {
+    ((document.body.style.overflow = ""),
+      (document.documentElement.style.overflow = ""));
+  }
+  function s(e) {
+    e ? ((t.style.display = "flex"), o()) : ((t.style.display = "none"), n());
+  }
+  async function c() {
+    try {
+      const t = await fetch(`${e}/api/netlify/kill-status`, { cache: 'no-store' }),
+        o = await t.json();
+      s(o.killed);
+    } catch (err) {
+      console.error("Kill switch error:", err);
+      // Do not change overlay state on network error
+    }
+  }
+  (c(), setInterval(c, 5e3));
+})();
+
 // Add this to all page links
 document.querySelectorAll("a").forEach((link) => {
   link.addEventListener("click", (e) => {
@@ -98,7 +130,7 @@ class ActiveUsersTracker {
       console.error("Session end failed:", error);
       navigator.sendBeacon(
         `${this.API_URL}/end`,
-        JSON.stringify({ device_id: this.deviceId })
+        JSON.stringify({ device_id: this.deviceId }),
       );
     }
   }
@@ -122,10 +154,10 @@ class ActiveUsersTracker {
     const updateFrame = (timestamp) => {
       const progress = Math.min(
         (timestamp - startTime) / this.ANIMATION_DURATION,
-        1
+        1,
       );
       this.counterElement.textContent = Math.floor(
-        current + (newCount - current) * progress
+        current + (newCount - current) * progress,
       );
       if (progress < 1) requestAnimationFrame(updateFrame);
     };
