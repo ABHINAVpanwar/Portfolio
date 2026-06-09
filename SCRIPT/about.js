@@ -19,6 +19,10 @@ hamMenuIcon.addEventListener("click", () => {
     document.getElementById("B2").style.display === "none" ? "flex" : "none";
   document.getElementById("chai-section").style.display =
     document.getElementById("chai-section").style.display === "none" ? "flex" : "none";
+  const vb = document.getElementById("visitor-badge");
+  if (vb) vb.style.display = vb.style.display === "none" ? "block" : "none";
+  const rb = document.getElementById("reaction-bar");
+  if (rb) rb.style.display = rb.style.display === "none" ? "flex" : "none";
 });
 navLinks.forEach((navLinks) => {
   navLinks.addEventListener("click", () => {
@@ -145,7 +149,6 @@ document.querySelectorAll('.bar-container').forEach(container => {
   // Mouse
   container.addEventListener('mousedown', e => {
     dragging = true;
-    // disable transition during drag for instant feedback
     document.getElementById(skill).style.transition = 'none';
     onMove(e.clientX);
   });
@@ -185,6 +188,61 @@ async function animateBars() {
   if (skillBarsAnimated) return;
   skillBarsAnimated = true;
   await loadScores();
+  loadVisitorRatings();
+}
+
+// ── visitor skill ratings ──
+async function loadVisitorRatings() {
+  try {
+    const res  = await fetch(`${API}/api/skill_ratings`, { cache: 'no-store' });
+    const data = await res.json();
+    Object.keys(DEFAULT_SCORES).forEach(id => {
+      const avg = data[id];
+      if (avg === null || avg === undefined) return;
+      const container = document.querySelector(`.bar-container[data-skill="${id}"]`);
+      if (!container) return;
+      let overlay = container.querySelector('.bar-visitor');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'bar-visitor';
+        overlay.style.cssText = 'position:absolute;top:0;height:100%;background:rgba(255,255,255,0.35);border-radius:10px;transition:width 1s ease-in-out;pointer-events:none';
+        container.style.position = 'relative';
+        container.appendChild(overlay);
+      }
+      overlay.style.width = avg + '%';
+      overlay.title = `Visitors avg: ${avg}%`;
+    });
+  } catch(e) {}
+}
+
+// ── visitor drag-to-rate (fires on mouseup / touchend) ──
+const ratedSkills = JSON.parse(localStorage.getItem('vr_rated') || '[]');
+
+document.querySelectorAll('.bar-container').forEach(container => {
+  const skill = container.dataset.skill;
+  container.addEventListener('mouseup', e => {
+    if (ratedSkills.includes(skill)) return;
+    const val = getValueFromEvent(container, e.clientX);
+    submitVisitorRating(skill, val);
+  });
+  container.addEventListener('touchend', e => {
+    if (ratedSkills.includes(skill)) return;
+    const touch = e.changedTouches[0];
+    const val   = getValueFromEvent(container, touch.clientX);
+    submitVisitorRating(skill, val);
+  });
+});
+
+async function submitVisitorRating(skill, value) {
+  try {
+    await fetch(`${API}/api/skill_ratings`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ skill, value })
+    });
+    ratedSkills.push(skill);
+    localStorage.setItem('vr_rated', JSON.stringify(ratedSkills));
+    loadVisitorRatings();
+  } catch(e) {}
 }
 
 const shSection = document.getElementById('SH');

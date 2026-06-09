@@ -279,8 +279,76 @@
           <div class="bar" id="C"></div>
         </div>
       </div>
-      <div id="scores-hint">drag bars to rate &nbsp;&bull;&nbsp; last changed: <span id="scores-time">—</span></div>
+      <div id="scores-hint">your bar · visitor avg (white) &nbsp;&bull;&nbsp; last changed: <span id="scores-time">—</span></div>
     </div>
+    <!-- Visitor counter badge + Reaction bar -->
+    <div id="visitor-badge" style="text-align:center;padding:8px 0 2px;font-family:'Poppins',sans-serif;font-size:11px;color:#555;letter-spacing:0.3px;background:#121212"></div>
+    <div id="reaction-bar" style="display:flex;justify-content:center;gap:16px;padding:10px 0 18px;background:#121212">
+      <button class="rxn-btn" data-emoji="👍" onclick="sendReaction(this)">👍 <span class="rxn-count">…</span></button>
+      <button class="rxn-btn" data-emoji="🔥" onclick="sendReaction(this)">🔥 <span class="rxn-count">…</span></button>
+      <button class="rxn-btn" data-emoji="💯" onclick="sendReaction(this)">💯 <span class="rxn-count">…</span></button>
+    </div>
+    <style>
+      .rxn-btn {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 20px;
+        padding: 5px 14px;
+        font-size: 15px;
+        cursor: pointer;
+        color: #ccc;
+        font-family: 'Poppins', sans-serif;
+        transition: background 0.2s, transform 0.15s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .rxn-btn:hover { background: rgba(76,175,80,0.18); transform: scale(1.08); }
+      .rxn-btn.reacted { background: rgba(76,175,80,0.28); border-color: #4caf50; color: white; }
+      .rxn-count { font-size: 11px; color: #888; }
+      .rxn-btn.reacted .rxn-count { color: #4caf50; }
+    </style>
+    <script>
+      (async function(){
+        try {
+          const res  = await fetch('https://abhinavpanwar.onrender.com/api/visits');
+          const data = await res.json();
+          const el   = document.getElementById('visitor-badge');
+          if (el && data.count) el.textContent = '👥 ' + data.count + ' people visited';
+        } catch(e){}
+      })();
+
+      const reactedEmojis = JSON.parse(localStorage.getItem('rxn_done') || '[]');
+
+      async function loadReactions() {
+        try {
+          const res  = await fetch('https://abhinavpanwar.onrender.com/api/reactions');
+          const data = await res.json();
+          document.querySelectorAll('.rxn-btn').forEach(btn => {
+            const e = btn.dataset.emoji;
+            btn.querySelector('.rxn-count').textContent = data.reactions[e] ?? 0;
+            if (reactedEmojis.includes(e)) btn.classList.add('reacted');
+          });
+        } catch(e){}
+      }
+      loadReactions();
+
+      async function sendReaction(btn) {
+        const emoji = btn.dataset.emoji;
+        if (reactedEmojis.includes(emoji)) return;
+        try {
+          const res  = await fetch('https://abhinavpanwar.onrender.com/api/reactions', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ emoji })
+          });
+          const data = await res.json();
+          btn.querySelector('.rxn-count').textContent = data.count;
+          btn.classList.add('reacted');
+          reactedEmojis.push(emoji);
+          localStorage.setItem('rxn_done', JSON.stringify(reactedEmojis));
+        } catch(e){}
+      }
+    </script>
     <div id="B1">
       <button id="experience" class="btn" onclick="f1()">My Experiences</button>
       <button id="education" class="btn" onclick="f2()">My Education</button>
@@ -351,8 +419,12 @@
       </div>
     </div>
     <div id="overlay"></div>
-    <!-- Hidden YouTube Player Container -->
-    <div id="youtube-player" style="display: none"></div>
+    <!-- Now-playing toast -->
+    <div id="np-toast" style="position:fixed;top:70px;left:50%;transform:translateX(-50%);background:rgba(30,30,30,0.92);color:#4caf50;padding:8px 18px;border-radius:20px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;z-index:2000;opacity:0;transition:opacity 0.6s;pointer-events:none;white-space:nowrap"></div>
+    <!-- Music YouTube Player Container (used by IFrame API) -->
+    <div id="yt-music-container" style="display:none"></div>
+    <!-- Chat YouTube Player Container -->
+    <div id="yt-chat-container" style="display:none"></div>
     <div id="loginDiv">
       <input
         type="text"
@@ -390,7 +462,22 @@
           </div>
           <div id="now-playing-text">No songs yet</div>
         </div>
-        <span id="music-close" onclick="toggleMusicPanel()">&#x2715;</span>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <span id="shuffle-btn" title="Shuffle" style="cursor:pointer;font-size:14px;opacity:0.7;transition:opacity 0.2s" onclick="toggleShuffle()">🔀</span>
+          <span id="repeat-btn" title="Repeat" style="cursor:pointer;font-size:14px;opacity:0.7;transition:opacity 0.2s" onclick="toggleRepeat()">🔁</span>
+          <span id="music-request-btn" title="Request a song" style="cursor:pointer;font-size:16px;color:white;opacity:0.8;transition:opacity 0.2s;font-weight:700" onclick="toggleRequestForm()">+</span>
+          <span id="music-close" onclick="toggleMusicPanel()">&#x2715;</span>
+        </div>
+      </div>
+      <div id="music-progress-wrap" style="height:3px;background:rgba(255,255,255,0.15);cursor:pointer" onclick="seekProgress(event)">
+        <div id="music-progress-bar" style="height:100%;width:0%;background:#4caf50;transition:width 0.5s linear"></div>
+      </div>
+      <div id="song-request-form" style="display:none;padding:10px 14px;background:#111;border-bottom:1px solid rgba(76,175,80,0.2)">
+        <input id="req-title" placeholder="Song title *" style="width:100%;margin-bottom:6px;padding:5px 8px;border-radius:6px;border:1px solid #333;background:#222;color:#fff;font-size:11px;box-sizing:border-box">
+        <input id="req-artist" placeholder="Artist (optional)" style="width:100%;margin-bottom:6px;padding:5px 8px;border-radius:6px;border:1px solid #333;background:#222;color:#fff;font-size:11px;box-sizing:border-box">
+        <input id="req-url" placeholder="YouTube URL *" style="width:100%;margin-bottom:8px;padding:5px 8px;border-radius:6px;border:1px solid #333;background:#222;color:#fff;font-size:11px;box-sizing:border-box">
+        <button onclick="submitSongRequest()" style="width:100%;padding:5px;background:#4caf50;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit">Submit Request</button>
+        <div id="req-status" style="font-size:10px;color:#4caf50;text-align:center;margin-top:4px"></div>
       </div>
       <div id="music-list"></div>
     </div>
@@ -599,15 +686,104 @@
       }
     </style>
 
+    <!-- YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script>
       (function () {
         const API = 'https://abhinavpanwar.onrender.com';
         let songs = [];
-        let currentIdx = -1;   // -1 = nothing playing
+        let currentIdx = -1;
         let isPlaying = false;
         let panelOpen = false;
         let votedIds = JSON.parse(localStorage.getItem('mv_voted') || '[]');
-        let playerIframe = null;
+        let ytPlayer = null;
+        let ytReady = false;
+        let pendingPlay = null;
+        let shuffleOn = false;
+        let repeatOn = false;
+        let progressTimer = null;
+
+        // ── YouTube IFrame API ready callback ─────────────────────
+        window.onYouTubeIframeAPIReady = function () {
+          ytReady = true;
+          const container = document.getElementById('yt-music-container');
+          ytPlayer = new YT.Player(container, {
+            width: '0', height: '0',
+            playerVars: { autoplay: 0, controls: 0, rel: 0 },
+            events: {
+              onStateChange: function (e) {
+                if (e.data === YT.PlayerState.ENDED) autoNext();
+                if (e.data === YT.PlayerState.PLAYING) { setPlayingState(true); startProgress(); }
+                if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.UNSTARTED) { setPlayingState(false); stopProgress(); }
+              }
+            }
+          });
+          if (pendingPlay) { _loadAndPlay(pendingPlay.videoId, pendingPlay.idx); pendingPlay = null; }
+        };
+
+        function _loadAndPlay(videoId, idx) {
+          currentIdx = idx;
+          ytPlayer.loadVideoById(videoId);
+          setPlayingState(true);
+        }
+
+        // ── progress bar ──────────────────────────────────────────
+        function startProgress() {
+          stopProgress();
+          progressTimer = setInterval(() => {
+            if (!ytPlayer || !ytReady) return;
+            try {
+              const cur = ytPlayer.getCurrentTime();
+              const dur = ytPlayer.getDuration();
+              if (dur > 0) document.getElementById('music-progress-bar').style.width = (cur / dur * 100) + '%';
+            } catch (e) {}
+          }, 1000);
+        }
+        function stopProgress() {
+          clearInterval(progressTimer);
+        }
+        window.seekProgress = function (e) {
+          if (!ytPlayer || !ytReady) return;
+          const wrap = document.getElementById('music-progress-wrap');
+          const ratio = Math.min(Math.max(e.offsetX / wrap.offsetWidth, 0), 1);
+          try { ytPlayer.seekTo(ytPlayer.getDuration() * ratio, true); } catch (e) {}
+        };
+
+        // ── shuffle / repeat ──────────────────────────────────────
+        window.toggleShuffle = function () {
+          shuffleOn = !shuffleOn;
+          document.getElementById('shuffle-btn').style.opacity = shuffleOn ? '1' : '0.7';
+        };
+        window.toggleRepeat = function () {
+          repeatOn = !repeatOn;
+          document.getElementById('repeat-btn').style.opacity = repeatOn ? '1' : '0.7';
+        };
+
+        // ── song request form ─────────────────────────────────────
+        window.toggleRequestForm = function () {
+          const form = document.getElementById('song-request-form');
+          form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        };
+        window.submitSongRequest = async function () {
+          const title = document.getElementById('req-title').value.trim();
+          const artist = document.getElementById('req-artist').value.trim();
+          const url   = document.getElementById('req-url').value.trim();
+          const status = document.getElementById('req-status');
+          if (!title || !url) { status.style.color = '#f44'; status.textContent = 'Title and URL are required'; return; }
+          const match = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)(\S{11})/);
+          if (!match) { status.style.color = '#f44'; status.textContent = 'Invalid YouTube URL'; return; }
+          try {
+            await fetch(`${API}/api/songs/request`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title, artist, youtube_id: match[1] })
+            });
+            status.style.color = '#4caf50';
+            status.textContent = 'Submitted! Pending review ✅';
+            document.getElementById('req-title').value = '';
+            document.getElementById('req-artist').value = '';
+            document.getElementById('req-url').value = '';
+          } catch (e) { status.style.color = '#f44'; status.textContent = 'Failed to submit'; }
+        };
 
         // ── panel toggle ──────────────────────────────────────────
         function toggleMusicPanel() {
@@ -628,34 +804,32 @@
             const res = await fetch(`${API}/api/songs`, { cache: 'no-store' });
             const data = await res.json();
             const playingId = songs[currentIdx]?.id;
-            songs = (data.songs || []).sort((a, b) => b.votes - a.votes);
+            const newSongs = (data.songs || []).sort((a, b) => b.votes - a.votes);
+            const oldIds = new Set(songs.map(s => s.id));
+            const hasNew = newSongs.some(s => !oldIds.has(s.id));
+            songs = newSongs;
             if (playingId) {
               const newIdx = songs.findIndex(s => s.id === playingId);
               currentIdx = newIdx !== -1 ? newIdx : currentIdx;
             }
             renderList();
             if (!isPlaying && songs.length) updateNowPlaying(songs[0]);
+            if (hasNew && !isPlaying && songs.length) window.playSong(0);
           } catch (e) {
-            document.getElementById('music-list').innerHTML = '<div class="music-empty">Could not load songs</div>';
+            if (panelOpen) document.getElementById('music-list').innerHTML = '<div class="music-empty">Could not load songs</div>';
           }
         }
 
         // ── render song list ──────────────────────────────────────
         function renderList() {
           const list = document.getElementById('music-list');
-          if (!songs.length) {
-            list.innerHTML = '<div class="music-empty">No songs added yet</div>';
-            return;
-          }
+          if (!songs.length) { list.innerHTML = '<div class="music-empty">No songs added yet</div>'; return; }
           list.innerHTML = songs.map((s, i) => {
             const voted     = votedIds.includes(s.id);
             const active    = i === currentIdx;
             const waveClass = active && isPlaying ? '' : ' paused';
-            return `
-              <div class="music-item${active ? ' playing' : ''}" onclick="playSong(${i})">
-                <div class="song-wave${waveClass}">
-                  <span></span><span></span><span></span>
-                </div>
+            return `<div class="music-item${active ? ' playing' : ''}" onclick="playSong(${i})">
+                <div class="song-wave${waveClass}"><span></span><span></span><span></span></div>
                 <div class="song-info">
                   <div class="song-title">${s.title}</div>
                   <div class="song-artist">${s.artist || 'Unknown'}</div>
@@ -668,13 +842,11 @@
           }).join('');
         }
 
-        // ── now-playing header text ───────────────────────────────
         function updateNowPlaying(song) {
           document.getElementById('now-playing-text').textContent =
             song ? `${song.title}${song.artist ? ' · ' + song.artist : ''}` : 'No songs yet';
         }
 
-        // ── set playing state on button ───────────────────────────
         function setPlayingState(playing) {
           isPlaying = playing;
           const btn = document.getElementById('music-btn');
@@ -683,43 +855,31 @@
           renderList();
         }
 
-        // ── play / pause toggle ───────────────────────────────────
         window.playSong = function (idx) {
-          // clicking the currently playing song → pause it
           if (idx === currentIdx && isPlaying) {
-            if (playerIframe) playerIframe.remove();
-            playerIframe = null;
+            if (ytPlayer && ytReady) ytPlayer.pauseVideo();
             setPlayingState(false);
             return;
           }
-          currentIdx = idx;
           const song = songs[idx];
           if (!song) return;
           updateNowPlaying(song);
-          if (playerIframe) playerIframe.remove();
-          playerIframe = document.createElement('iframe');
-          playerIframe.src = `https://www.youtube.com/embed/${song.youtube_id}?autoplay=1&mute=0&controls=0&rel=0&enablejsapi=1`;
-          playerIframe.width = '0';
-          playerIframe.height = '0';
-          playerIframe.style.display = 'none';
-          playerIframe.allow = 'autoplay';
-          // auto-advance to next song when this one ends
-          playerIframe.addEventListener('load', () => {
-            clearTimeout(window._songTimer);
-            // YouTube embeds don't fire ended events easily without API;
-            // use a generous 7-min fallback to advance
-            window._songTimer = setTimeout(() => autoNext(), 7 * 60 * 1000);
-          });
-          document.body.appendChild(playerIframe);
-          setPlayingState(true);
+          if (!ytReady || !ytPlayer) { pendingPlay = { videoId: song.youtube_id, idx }; return; }
+          _loadAndPlay(song.youtube_id, idx);
         };
 
-        // ── auto-advance to next song ─────────────────────────────
+        // ── auto-advance ──────────────────────────────────────────
         function autoNext() {
           if (!songs.length) return;
-          const nextIdx = (currentIdx + 1) % songs.length;
-          window.playSong(nextIdx);
-          // open panel briefly to show what's playing
+          if (repeatOn) { _loadAndPlay(songs[currentIdx].youtube_id, currentIdx); return; }
+          let nextIdx;
+          if (shuffleOn) {
+            do { nextIdx = Math.floor(Math.random() * songs.length); } while (songs.length > 1 && nextIdx === currentIdx);
+          } else {
+            nextIdx = (currentIdx + 1) % songs.length;
+          }
+          updateNowPlaying(songs[nextIdx]);
+          _loadAndPlay(songs[nextIdx].youtube_id, nextIdx);
           if (!panelOpen) {
             panelOpen = true;
             document.getElementById('music-panel').style.display = 'flex';
@@ -727,13 +887,11 @@
           }
         }
 
-        // ── vote ──────────────────────────────────────────────────
         window.voteSong = async function (id, btn) {
           if (votedIds.includes(id)) return;
           try {
-            const res = await fetch(`${API}/api/songs/vote`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+            const res  = await fetch(`${API}/api/songs/vote`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ id })
             });
             const data = await res.json();
@@ -745,26 +903,34 @@
             if (song) song.votes = data.votes;
             const playingId = songs[currentIdx]?.id;
             songs.sort((a, b) => b.votes - a.votes);
-            // keep currentIdx pointing to the same song after re-sort
             if (playingId) currentIdx = songs.findIndex(s => s.id === playingId);
             renderList();
           } catch (e) { console.error('Vote failed', e); }
         };
 
-        // ── init: load songs silently on page load ────────────────
+        // ── now-playing toast ─────────────────────────────────────
+        function showToast(title) {
+          const t = document.getElementById('np-toast');
+          t.textContent = '🎵 Now Playing: ' + title;
+          t.style.opacity = '1';
+          setTimeout(() => { t.style.opacity = '0'; }, 3000);
+        }
+
+        // ── init ──────────────────────────────────────────────────
         (async function init() {
           try {
-            const res = await fetch(`${API}/api/songs`, { cache: 'no-store' });
+            const res  = await fetch(`${API}/api/songs`, { cache: 'no-store' });
             const data = await res.json();
-            songs = data.songs || [];
+            songs = (data.songs || []).sort((a, b) => b.votes - a.votes);
             if (songs.length) {
               updateNowPlaying(songs[0]);
               window.playSong(0);
+              showToast(songs[0].title);
             }
           } catch (e) {}
         })();
 
-        // refresh list every 15s only when panel is open
+        setInterval(loadSongs, 30000);
         setInterval(() => { if (panelOpen) loadSongs(); }, 15000);
       })();
     </script>
@@ -1267,23 +1433,14 @@
       }
 
       function playYouTubeAudio(videoId) {
+        const container = document.getElementById('yt-chat-container');
+        container.innerHTML = '';
         const iframe = document.createElement("iframe");
         iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0`;
         iframe.width = "0";
         iframe.height = "0";
-        iframe.style.display = "none";
         iframe.allow = "autoplay";
-
-        const oldIframe = document.querySelector('iframe[src*="youtube.com"]');
-        if (oldIframe) oldIframe.remove();
-
-        document.body.appendChild(iframe);
-
-        setTimeout(() => {
-          if (iframe && iframe.parentNode) {
-            iframe.remove();
-          }
-        }, 3600000);
+        container.appendChild(iframe);
       }
 
       function playMemeSound(soundFile) {

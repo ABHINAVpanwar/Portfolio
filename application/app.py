@@ -834,6 +834,170 @@ def delete_song():
     songs_col.delete_one({'_id': song_id})
     return jsonify({'status': 'deleted'})
 
+# ============ SONG REQUESTS (visitor submissions, pending approval) ============
+song_requests_col = db['song_requests'] if db is not None else None
+
+@app.route('/api/songs/request', methods=['POST', 'OPTIONS'])
+def request_song():
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = '*'
+        r.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return r
+    if song_requests_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    data       = request.json or {}
+    title      = data.get('title', '').strip()
+    artist     = data.get('artist', '').strip()
+    youtube_id = data.get('youtube_id', '').strip()
+    if not title or not youtube_id:
+        return jsonify({'error': 'title and youtube_id are required'}), 400
+    req_id = str(uuid.uuid4())
+    song_requests_col.insert_one({
+        '_id': req_id, 'title': title, 'artist': artist,
+        'youtube_id': youtube_id, 'status': 'pending',
+        'ip': get_client_ip(), 'created_at': now_ist()
+    })
+    r = make_response(jsonify({'status': 'submitted'}))
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    return r
+
+@app.route('/api/songs/requests', methods=['GET'])
+def list_song_requests():
+    if song_requests_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    token = request.headers.get('X-Admin-Token') or request.args.get('token')
+    if token != app.secret_key:
+        return jsonify({'error': 'Unauthorized'}), 401
+    reqs = list(song_requests_col.find({'status': 'pending'}, {'_id': 1, 'title': 1, 'artist': 1, 'youtube_id': 1, 'created_at': 1}))
+    for r in reqs:
+        r['id'] = str(r.pop('_id'))
+        if 'created_at' in r and hasattr(r['created_at'], 'strftime'):
+            r['created_at'] = r['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+    return jsonify({'requests': reqs})
+
+@app.route('/api/songs/approve', methods=['POST'])
+def approve_song_request():
+    if song_requests_col is None or songs_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    data = request.json or {}
+    if not require_password(data):
+        return jsonify({'error': 'Unauthorized'}), 401
+    req_id = data.get('id')
+    req    = song_requests_col.find_one({'_id': req_id})
+    if not req:
+        return jsonify({'error': 'Request not found'}), 404
+    song_id = str(uuid.uuid4())
+    songs_col.insert_one({
+        '_id': song_id, 'title': req['title'], 'artist': req.get('artist', ''),
+        'youtube_id': req['youtube_id'], 'votes': 0, 'created_at': now_ist()
+    })
+    song_requests_col.delete_one({'_id': req_id})
+    return jsonify({'status': 'approved', 'song_id': song_id})
+
+# ============ VISITOR COUNT ============
+@app.route('/api/visits', methods=['GET', 'OPTIONS'])
+def get_visits():
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = '*'
+        return r
+    count = visitors_col.count_documents({}) if visitors_col is not None else 0
+    r = make_response(jsonify({'count': count}))
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    return r
+
+# ============ REACTIONS ============
+reactions_col = db['reactions'] if db is not None else None
+REACTION_EMOJIS = ['👍', '🔥', '💯']
+
+if reactions_col is not None:
+    for emoji in REACTION_EMOJIS:
+        if not reactions_col.find_one({'_id': emoji}):
+            reactions_col.insert_one({'_id': emoji, 'count': 0})
+
+@app.route('/api/reactions', methods=['GET', 'OPTIONS'])
+def get_reactions():
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = '*'
+        return r
+    if reactions_col is None:
+        return jsonify({'reactions': {}}), 500
+    docs = {d['_id']: d['count'] for d in reactions_col.find({})}
+    r = make_response(jsonify({'reactions': docs}))
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    return r
+
+@app.route('/api/reactions', methods=['POST'])
+def post_reaction():
+    if reactions_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    emoji = (request.json or {}).get('emoji')
+    if emoji not in REACTION_EMOJIS:
+        return jsonify({'error': 'Invalid emoji'}), 400
+    reactions_col.update_one({'_id': emoji}, {'$inc': {'count': 1}}, upsert=True)
+    doc = reactions_col.find_one({'_id': emoji})
+    r = make_response(jsonify({'emoji': emoji, 'count': doc['count']}))
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    return r
+
+# ============ VISITOR SKILL RATINGS ============
+visitor_skills_col = db['visitor_skills'] if db is not None else None
+SKILL_KEYS = ('F', 'SM', 'TM', 'PS', 'DM', 'C')
+
+if visitor_skills_col is not None and not visitor_skills_col.find_one({'_id': 'aggregate'}):
+    visitor_skills_col.insert_one({'_id': 'aggregate',
+        **{k: {'total': 0, 'count': 0} for k in SKILL_KEYS}})
+
+@app.route('/api/skill_ratings', methods=['GET', 'OPTIONS'])
+def get_skill_ratings():
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = '*'
+        return r
+    if visitor_skills_col is None:
+        return jsonify({}), 500
+    doc = visitor_skills_col.find_one({'_id': 'aggregate'}) or {}
+    result = {}
+    for k in SKILL_KEYS:
+        entry = doc.get(k, {'total': 0, 'count': 0})
+        result[k] = round(entry['total'] / entry['count']) if entry['count'] else None
+    r = make_response(jsonify(result))
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    return r
+
+@app.route('/api/skill_ratings', methods=['POST'])
+def post_skill_rating():
+    if visitor_skills_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    data  = request.json or {}
+    skill = data.get('skill')
+    value = data.get('value')
+    if skill not in SKILL_KEYS or not isinstance(value, (int, float)) or not (0 <= value <= 100):
+        return jsonify({'error': 'Invalid skill or value'}), 400
+    value = int(round(value))
+    visitor_skills_col.update_one(
+        {'_id': 'aggregate'},
+        {'$inc': {f'{skill}.total': value, f'{skill}.count': 1}},
+        upsert=True
+    )
+    doc    = visitor_skills_col.find_one({'_id': 'aggregate'})
+    entry  = doc.get(skill, {'total': value, 'count': 1})
+    avg    = round(entry['total'] / entry['count'])
+    r = make_response(jsonify({'skill': skill, 'avg': avg, 'count': entry['count']}))
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    return r
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
