@@ -87,6 +87,10 @@ try:
     if not config_col.find_one({'_id': 'kill_switch'}):
         config_col.insert_one({'_id': 'kill_switch', 'killed': False, 'updated_at': None})
 
+    # Seed dp visibility doc if missing
+    if not config_col.find_one({'_id': 'dp_visible'}):
+        config_col.insert_one({'_id': 'dp_visible', 'visible': True})
+
     songs_col = db['songs']
     rating_col = db['rating']
     scores_col = db['scores']
@@ -834,119 +838,40 @@ def delete_song():
     songs_col.delete_one({'_id': song_id})
     return jsonify({'status': 'deleted'})
 
-# ============ SONG REQUESTS (visitor submissions, pending approval) ============
-song_requests_col = db['song_requests'] if db is not None else None
+@app.route('/api/dp', methods=['GET', 'POST', 'OPTIONS'])
+def dp():
+    origin = request.headers.get('Origin', '')
+    allowed = ['https://abhinavpanwar.netlify.app', 'http://127.0.0.1:5501', 'http://localhost:5501']
+    cors_origin = origin if origin in allowed else 'https://abhinavpanwar.netlify.app'
 
-@app.route('/api/songs/request', methods=['POST', 'OPTIONS'])
-def request_song():
     if request.method == 'OPTIONS':
         r = make_response()
-        r.headers['Access-Control-Allow-Origin'] = '*'
-        r.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        r.headers['Access-Control-Allow-Origin'] = cors_origin
+        r.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
         r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
         return r
-    if song_requests_col is None:
-        return jsonify({'error': 'DB unavailable'}), 500
-    if not request.is_json:
-        return jsonify({'error': 'Content-Type must be application/json'}), 415
-    data       = request.json or {}
-    title      = data.get('title', '').strip()
-    artist     = data.get('artist', '').strip()
-    youtube_id = data.get('youtube_id', '').strip()
-    if not title or not youtube_id:
-        return jsonify({'error': 'title and youtube_id are required'}), 400
-    req_id = str(uuid.uuid4())
-    song_requests_col.insert_one({
-        '_id': req_id, 'title': title, 'artist': artist,
-        'youtube_id': youtube_id, 'status': 'pending',
-        'ip': get_client_ip(), 'created_at': now_ist()
-    })
-    r = make_response(jsonify({'status': 'submitted'}))
-    r.headers['Access-Control-Allow-Origin'] = '*'
-    return r
-
-@app.route('/api/songs/requests', methods=['GET'])
-def list_song_requests():
-    if song_requests_col is None:
-        return jsonify({'error': 'DB unavailable'}), 500
-    token = request.headers.get('X-Admin-Token') or request.args.get('token')
-    if token != app.secret_key:
-        return jsonify({'error': 'Unauthorized'}), 401
-    reqs = list(song_requests_col.find({'status': 'pending'}, {'_id': 1, 'title': 1, 'artist': 1, 'youtube_id': 1, 'created_at': 1}))
-    for r in reqs:
-        r['id'] = str(r.pop('_id'))
-        if 'created_at' in r and hasattr(r['created_at'], 'strftime'):
-            r['created_at'] = r['created_at'].strftime('%Y-%m-%d %H:%M:%S')
-    return jsonify({'requests': reqs})
-
-@app.route('/api/songs/approve', methods=['POST'])
-def approve_song_request():
-    if song_requests_col is None or songs_col is None:
+    if request.method == 'GET':
+        try:
+            doc = config_col.find_one({'_id': 'dp_visible'}) if config_col else None
+            visible = doc.get('visible', True) if doc else True
+        except Exception as e:
+            logger.error(f"dp GET error: {e}")
+            visible = True
+        r = make_response(jsonify({'visible': visible}))
+        r.headers['Access-Control-Allow-Origin'] = cors_origin
+        return r
+    # POST
+    if config_col is None:
         return jsonify({'error': 'DB unavailable'}), 500
     if not request.is_json:
         return jsonify({'error': 'Content-Type must be application/json'}), 415
     data = request.json or {}
     if not require_password(data):
         return jsonify({'error': 'Unauthorized'}), 401
-    req_id = data.get('id')
-    req    = song_requests_col.find_one({'_id': req_id})
-    if not req:
-        return jsonify({'error': 'Request not found'}), 404
-    song_id = str(uuid.uuid4())
-    songs_col.insert_one({
-        '_id': song_id, 'title': req['title'], 'artist': req.get('artist', ''),
-        'youtube_id': req['youtube_id'], 'votes': 0, 'created_at': now_ist()
-    })
-    song_requests_col.delete_one({'_id': req_id})
-    return jsonify({'status': 'approved', 'song_id': song_id})
-
-# ============ VISITOR COUNT ============
-@app.route('/api/visits', methods=['GET', 'OPTIONS'])
-def get_visits():
-    if request.method == 'OPTIONS':
-        r = make_response()
-        r.headers['Access-Control-Allow-Origin'] = '*'
-        return r
-    count = visitors_col.count_documents({}) if visitors_col is not None else 0
-    r = make_response(jsonify({'count': count}))
-    r.headers['Access-Control-Allow-Origin'] = '*'
-    return r
-
-# ============ REACTIONS ============
-reactions_col = db['reactions'] if db is not None else None
-REACTION_EMOJIS = ['👍', '🔥', '💯']
-
-if reactions_col is not None:
-    for emoji in REACTION_EMOJIS:
-        if not reactions_col.find_one({'_id': emoji}):
-            reactions_col.insert_one({'_id': emoji, 'count': 0})
-
-@app.route('/api/reactions', methods=['GET', 'OPTIONS'])
-def get_reactions():
-    if request.method == 'OPTIONS':
-        r = make_response()
-        r.headers['Access-Control-Allow-Origin'] = '*'
-        return r
-    if reactions_col is None:
-        return jsonify({'reactions': {}}), 500
-    docs = {d['_id']: d['count'] for d in reactions_col.find({})}
-    r = make_response(jsonify({'reactions': docs}))
-    r.headers['Access-Control-Allow-Origin'] = '*'
-    return r
-
-@app.route('/api/reactions', methods=['POST'])
-def post_reaction():
-    if reactions_col is None:
-        return jsonify({'error': 'DB unavailable'}), 500
-    if not request.is_json:
-        return jsonify({'error': 'Content-Type must be application/json'}), 415
-    emoji = (request.json or {}).get('emoji')
-    if emoji not in REACTION_EMOJIS:
-        return jsonify({'error': 'Invalid emoji'}), 400
-    reactions_col.update_one({'_id': emoji}, {'$inc': {'count': 1}}, upsert=True)
-    doc = reactions_col.find_one({'_id': emoji})
-    r = make_response(jsonify({'emoji': emoji, 'count': doc['count']}))
-    r.headers['Access-Control-Allow-Origin'] = '*'
+    visible = bool(data.get('visible', True))
+    config_col.update_one({'_id': 'dp_visible'}, {'$set': {'visible': visible}}, upsert=True)
+    r = make_response(jsonify({'visible': visible}))
+    r.headers['Access-Control-Allow-Origin'] = cors_origin
     return r
 
 # ============ VISITOR SKILL RATINGS ============

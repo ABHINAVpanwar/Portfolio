@@ -281,74 +281,7 @@
       </div>
       <div id="scores-hint">your bar · visitor avg (white) &nbsp;&bull;&nbsp; last changed: <span id="scores-time">—</span></div>
     </div>
-    <!-- Visitor counter badge + Reaction bar -->
-    <div id="visitor-badge" style="text-align:center;padding:8px 0 2px;font-family:'Poppins',sans-serif;font-size:11px;color:#555;letter-spacing:0.3px;background:#121212"></div>
-    <div id="reaction-bar" style="display:flex;justify-content:center;gap:16px;padding:10px 0 18px;background:#121212">
-      <button class="rxn-btn" data-emoji="👍" onclick="sendReaction(this)">👍 <span class="rxn-count">…</span></button>
-      <button class="rxn-btn" data-emoji="🔥" onclick="sendReaction(this)">🔥 <span class="rxn-count">…</span></button>
-      <button class="rxn-btn" data-emoji="💯" onclick="sendReaction(this)">💯 <span class="rxn-count">…</span></button>
-    </div>
-    <style>
-      .rxn-btn {
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.12);
-        border-radius: 20px;
-        padding: 5px 14px;
-        font-size: 15px;
-        cursor: pointer;
-        color: #ccc;
-        font-family: 'Poppins', sans-serif;
-        transition: background 0.2s, transform 0.15s;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-      }
-      .rxn-btn:hover { background: rgba(76,175,80,0.18); transform: scale(1.08); }
-      .rxn-btn.reacted { background: rgba(76,175,80,0.28); border-color: #4caf50; color: white; }
-      .rxn-count { font-size: 11px; color: #888; }
-      .rxn-btn.reacted .rxn-count { color: #4caf50; }
-    </style>
-    <script>
-      (async function(){
-        try {
-          const res  = await fetch('https://abhinavpanwar.onrender.com/api/visits');
-          const data = await res.json();
-          const el   = document.getElementById('visitor-badge');
-          if (el && data.count) el.textContent = '👥 ' + data.count + ' people visited';
-        } catch(e){}
-      })();
 
-      const reactedEmojis = JSON.parse(localStorage.getItem('rxn_done') || '[]');
-
-      async function loadReactions() {
-        try {
-          const res  = await fetch('https://abhinavpanwar.onrender.com/api/reactions');
-          const data = await res.json();
-          document.querySelectorAll('.rxn-btn').forEach(btn => {
-            const e = btn.dataset.emoji;
-            btn.querySelector('.rxn-count').textContent = data.reactions[e] ?? 0;
-            if (reactedEmojis.includes(e)) btn.classList.add('reacted');
-          });
-        } catch(e){}
-      }
-      loadReactions();
-
-      async function sendReaction(btn) {
-        const emoji = btn.dataset.emoji;
-        if (reactedEmojis.includes(emoji)) return;
-        try {
-          const res  = await fetch('https://abhinavpanwar.onrender.com/api/reactions', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ emoji })
-          });
-          const data = await res.json();
-          btn.querySelector('.rxn-count').textContent = data.count;
-          btn.classList.add('reacted');
-          reactedEmojis.push(emoji);
-          localStorage.setItem('rxn_done', JSON.stringify(reactedEmojis));
-        } catch(e){}
-      }
-    </script>
     <div id="B1">
       <button id="experience" class="btn" onclick="f1()">My Experiences</button>
       <button id="education" class="btn" onclick="f2()">My Education</button>
@@ -465,19 +398,11 @@
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
           <span id="shuffle-btn" title="Shuffle" style="cursor:pointer;font-size:14px;opacity:0.7;transition:opacity 0.2s" onclick="toggleShuffle()">🔀</span>
           <span id="repeat-btn" title="Repeat" style="cursor:pointer;font-size:14px;opacity:0.7;transition:opacity 0.2s" onclick="toggleRepeat()">🔁</span>
-          <span id="music-request-btn" title="Request a song" style="cursor:pointer;font-size:16px;color:white;opacity:0.8;transition:opacity 0.2s;font-weight:700" onclick="toggleRequestForm()">+</span>
           <span id="music-close" onclick="toggleMusicPanel()">&#x2715;</span>
         </div>
       </div>
       <div id="music-progress-wrap" style="height:3px;background:rgba(255,255,255,0.15);cursor:pointer" onclick="seekProgress(event)">
         <div id="music-progress-bar" style="height:100%;width:0%;background:#4caf50;transition:width 0.5s linear"></div>
-      </div>
-      <div id="song-request-form" style="display:none;padding:10px 14px;background:#111;border-bottom:1px solid rgba(76,175,80,0.2)">
-        <input id="req-title" placeholder="Song title *" style="width:100%;margin-bottom:6px;padding:5px 8px;border-radius:6px;border:1px solid #333;background:#222;color:#fff;font-size:11px;box-sizing:border-box">
-        <input id="req-artist" placeholder="Artist (optional)" style="width:100%;margin-bottom:6px;padding:5px 8px;border-radius:6px;border:1px solid #333;background:#222;color:#fff;font-size:11px;box-sizing:border-box">
-        <input id="req-url" placeholder="YouTube URL *" style="width:100%;margin-bottom:8px;padding:5px 8px;border-radius:6px;border:1px solid #333;background:#222;color:#fff;font-size:11px;box-sizing:border-box">
-        <button onclick="submitSongRequest()" style="width:100%;padding:5px;background:#4caf50;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit">Submit Request</button>
-        <div id="req-status" style="font-size:10px;color:#4caf50;text-align:center;margin-top:4px"></div>
       </div>
       <div id="music-list"></div>
     </div>
@@ -759,32 +684,6 @@
           document.getElementById('repeat-btn').style.opacity = repeatOn ? '1' : '0.7';
         };
 
-        // ── song request form ─────────────────────────────────────
-        window.toggleRequestForm = function () {
-          const form = document.getElementById('song-request-form');
-          form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        };
-        window.submitSongRequest = async function () {
-          const title = document.getElementById('req-title').value.trim();
-          const artist = document.getElementById('req-artist').value.trim();
-          const url   = document.getElementById('req-url').value.trim();
-          const status = document.getElementById('req-status');
-          if (!title || !url) { status.style.color = '#f44'; status.textContent = 'Title and URL are required'; return; }
-          const match = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)(\S{11})/);
-          if (!match) { status.style.color = '#f44'; status.textContent = 'Invalid YouTube URL'; return; }
-          try {
-            await fetch(`${API}/api/songs/request`, {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ title, artist, youtube_id: match[1] })
-            });
-            status.style.color = '#4caf50';
-            status.textContent = 'Submitted! Pending review ✅';
-            document.getElementById('req-title').value = '';
-            document.getElementById('req-artist').value = '';
-            document.getElementById('req-url').value = '';
-          } catch (e) { status.style.color = '#f44'; status.textContent = 'Failed to submit'; }
-        };
-
         // ── panel toggle ──────────────────────────────────────────
         function toggleMusicPanel() {
           panelOpen = !panelOpen;
@@ -941,7 +840,7 @@
       <div id="messages"></div>
       <div id="chat-input">
         <input type="text" id="name" placeholder="Name" readonly />
-        <input type="text" id="message" placeholder="Message" />
+        <textarea id="message" placeholder="Message (Shift+Enter for new line)" rows="1"></textarea>
         <button id="send-btn" onclick="sendMessage()">Send</button>
         <button
           id="file-plus-btn"
@@ -984,12 +883,18 @@
         align-items: center;
       }
 
-      #chat-input input {
+      #chat-input input, #chat-input textarea {
         flex: 1;
         padding: 10px;
         border: 1px solid #ddd;
         border-radius: 20px;
         outline: none;
+        font-family: inherit;
+        font-size: 14px;
+        resize: none;
+        overflow-y: auto;
+        max-height: 120px;
+        line-height: 1.4;
       }
 
       #chat-input button {
@@ -1291,6 +1196,7 @@
           });
           logEvent({ event: "message", username, message });
           msgInput.value = "";
+          msgInput.style.height = 'auto';
           loadMessages();
         } catch (error) {
           console.error("Error sending message:", error);
@@ -1359,8 +1265,14 @@
                   <button class="copy-btn">Copy</button>
                 </div>
                 <span style="color:#888;font-size:10px;">${msg.time || ''}</span>`;
-              msgDiv.querySelector('.copy-btn').dataset.code = raw;
-              msgDiv.querySelector('.copy-btn').addEventListener('click', function () { copyCode(this); });
+              const copyBtn = msgDiv.querySelector('.copy-btn');
+              copyBtn.addEventListener('click', function () {
+                navigator.clipboard.writeText(raw).then(() => {
+                  copyBtn.textContent = 'Copied!';
+                  copyBtn.style.background = '#388e3c';
+                  setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.style.background = ''; }, 2000);
+                });
+              });
               messagesDiv.appendChild(msgDiv);
               return;
             }
@@ -1472,12 +1384,22 @@
       // ============ EVENT LISTENERS ============
       document
         .getElementById("message")
-        .addEventListener("keypress", function (event) {
-          if (event.key === "Enter") {
+        .addEventListener("keydown", function (event) {
+          if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
             sendMessage();
           }
+          // auto-grow
+          setTimeout(() => {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+          }, 0);
         });
+
+      document.getElementById("message").addEventListener("input", function () {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+      });
 
       // Initialize
       loadMessages();
@@ -1565,5 +1487,17 @@
     </script>
     <script src="../SCRIPT/about.js"></script>
     <script src="../SCRIPT/users.js"></script>
+    <script>
+      (async function () {
+        try {
+          const res  = await fetch('https://abhinavpanwar.onrender.com/api/dp');
+          const data = await res.json();
+          if (!data.visible) {
+            document.getElementById('profile').style.display = 'none';
+            document.getElementById('arc').style.display    = 'none';
+          }
+        } catch (e) {}
+      })();
+    </script>
   </body>
 </html>

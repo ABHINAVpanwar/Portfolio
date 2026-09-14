@@ -19,10 +19,7 @@ hamMenuIcon.addEventListener("click", () => {
     document.getElementById("B2").style.display === "none" ? "flex" : "none";
   document.getElementById("chai-section").style.display =
     document.getElementById("chai-section").style.display === "none" ? "flex" : "none";
-  const vb = document.getElementById("visitor-badge");
-  if (vb) vb.style.display = vb.style.display === "none" ? "block" : "none";
-  const rb = document.getElementById("reaction-bar");
-  if (rb) rb.style.display = rb.style.display === "none" ? "flex" : "none";
+
 });
 navLinks.forEach((navLinks) => {
   navLinks.addEventListener("click", () => {
