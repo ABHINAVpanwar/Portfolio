@@ -1491,9 +1491,18 @@
       (async function () {
         const API = 'https://abhinavpanwar.onrender.com';
         try {
-          const res  = await fetch(API + '/api/dp/photo', { cache: 'no-store' });
-          const data = await res.json();
-          if (data.photo) document.getElementById('profile-img').src = data.photo;
+          const [dpRes, photoRes] = await Promise.all([
+            fetch(API + '/api/dp',       { cache: 'no-store' }),
+            fetch(API + '/api/dp/photo', { cache: 'no-store' })
+          ]);
+          const dpData    = await dpRes.json();
+          const photoData = await photoRes.json();
+          const show = dpData.visible !== false;
+          document.getElementById('profile').style.display = show ? '' : 'none';
+          document.getElementById('arc').style.display    = show ? '' : 'none';
+          if (photoData.photo) {
+            document.getElementById('profile').style.backgroundImage = 'url(' + photoData.photo + ')';
+          }
         } catch (e) {}
       })();
     </script>
