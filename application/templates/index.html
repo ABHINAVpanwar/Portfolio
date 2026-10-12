@@ -792,7 +792,7 @@
                 });
                 const data = await res.json();
                 if (data.error) uploadStatus.textContent = 'Error: ' + data.error;
-                else { uploadStatus.textContent = [char]0x2713 + ' Photo updated!'; fileInput.value = ''; }
+                else { uploadStatus.textContent = '\u2713 Photo updated!'; fileInput.value = ''; }
               } catch (err) { uploadStatus.textContent = 'Upload failed: ' + err.message; }
               finally { uploadBtn.disabled = false; }
             });
