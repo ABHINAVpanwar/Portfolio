@@ -671,67 +671,14 @@
         })();
       </script>
 
-      <!-- DP Privacy Toggle -->
+      
       <div class="card">
         <h2>Profile Picture</h2>
-        <div id="dp-status" class="current-value">Checking...</div>
-        <button id="dp-toggle-btn" style="margin-top:10px;width:100%;">Toggle</button>
-        <div style="margin-top:16px;border-top:1px solid #333;padding-top:14px;">
-          <label style="display:block;margin-bottom:8px;font-weight:500;">Upload New Photo</label>
-          <img id="dp-preview" src="" alt="" style="display:none;width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid #444;margin-bottom:10px;" />
-          <input type="file" id="dp-file-input" accept="image/*" capture="user" style="display:block;width:100%;margin-bottom:8px;color:#ccc;" />
-          <button id="dp-upload-btn" class="secondary" style="width:100%;">Upload Photo</button>
-          <div id="dp-upload-status" style="margin-top:8px;font-size:13px;"></div>
-        </div>
+        <img id="dp-preview" src="" alt="" style="display:none;width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid #444;margin-bottom:10px;" />
+        <input type="file" id="dp-file-input" accept="image/*" capture="user" style="display:block;width:100%;margin-bottom:8px;color:#ccc;" />
+        <button id="dp-upload-btn" class="secondary" style="width:100%;">Upload Photo</button>
+        <div id="dp-upload-status" style="margin-top:8px;font-size:13px;"></div>
       </div>
-
-      <script>
-        (function () {
-          const API = window.location.origin;
-          const statusEl = document.getElementById('dp-status');
-          const toggleBtn = document.getElementById('dp-toggle-btn');
-          let dpVisible = true;
-
-          async function loadDpState() {
-            try {
-              const res  = await fetch(`${API}/api/dp`);
-              const data = await res.json();
-              dpVisible = data.visible;
-              updateUI();
-            } catch (e) { statusEl.textContent = 'Error loading state'; }
-          }
-
-          function updateUI() {
-            statusEl.textContent = dpVisible ? 'Visible' : 'Hidden';
-            statusEl.style.color = dpVisible ? 'var(--accent-color)' : 'var(--error-color)';
-            toggleBtn.textContent = dpVisible ? 'Hide DP' : 'Show DP';
-            toggleBtn.classList.toggle('danger', dpVisible);
-          }
-
-          toggleBtn.addEventListener('click', async () => {
-            const pwd = document.getElementById('current-password').textContent.trim();
-            if (!pwd || pwd === 'Loading current password...' || pwd === 'Error loading password') {
-              alert('Password not loaded yet, try again.');
-              return;
-            }
-            toggleBtn.disabled = true;
-            try {
-              const res  = await fetch(`${API}/api/dp`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ visible: !dpVisible, password: pwd })
-              });
-              const data = await res.json();
-              if (data.error) { alert('Error: ' + data.error); return; }
-              dpVisible = data.visible;
-              updateUI();
-            } catch (e) { alert('Failed to update: ' + e.message); }
-            finally { toggleBtn.disabled = false; }
-          });
-
-          loadDpState();
-        })();
-      </script>
 
 <script>
         (function () {

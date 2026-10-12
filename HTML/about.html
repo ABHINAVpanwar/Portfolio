@@ -189,7 +189,7 @@
     </header>
     <section id="S1">
       <div id="midsec">
-        <div id="profile"><img id="profile-img" src="../IMG/profileUS.jpg" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" /></div>
+        <div id="profile"><img id="profile-img" src="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" /></div>
         <div id="arc"></div>
       </div>
       <div id="handles">
@@ -1491,18 +1491,9 @@
       (async function () {
         const API = 'https://abhinavpanwar.onrender.com';
         try {
-          const [dpRes, photoRes] = await Promise.all([
-            fetch(API + '/api/dp', { cache: 'no-store' }),
-            fetch(API + '/api/dp/photo', { cache: 'no-store' })
-          ]);
-          const dpData    = await dpRes.json();
-          const photoData = await photoRes.json();
-          const show = dpData.visible !== false;
-          document.getElementById('profile').style.display = show ? '' : 'none';
-          document.getElementById('arc').style.display    = show ? '' : 'none';
-          if (photoData.photo) {
-            document.getElementById('profile-img').src = photoData.photo;
-          }
+          const res  = await fetch(API + '/api/dp/photo', { cache: 'no-store' });
+          const data = await res.json();
+          if (data.photo) document.getElementById('profile-img').src = data.photo;
         } catch (e) {}
       })();
     </script>
