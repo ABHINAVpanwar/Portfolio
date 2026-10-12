@@ -838,6 +838,46 @@ def delete_song():
     songs_col.delete_one({'_id': song_id})
     return jsonify({'status': 'deleted'})
 
+@app.route('/api/dp/photo', methods=['GET', 'POST', 'OPTIONS'])
+def dp_photo():
+    origin = request.headers.get('Origin', '')
+    allowed = ['https://abhinavpanwar.netlify.app', 'http://127.0.0.1:5501', 'http://localhost:5501']
+    cors_origin = origin if origin in allowed else 'https://abhinavpanwar.netlify.app'
+
+    if request.method == 'OPTIONS':
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = cors_origin
+        r.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return r
+    if request.method == 'GET':
+        try:
+            doc = config_col.find_one({'_id': 'dp_photo'}) if config_col else None
+            photo = doc.get('data') if doc else None
+        except Exception as e:
+            logger.error(f"dp_photo GET error: {e}")
+            photo = None
+        r = make_response(jsonify({'photo': photo}))
+        r.headers['Access-Control-Allow-Origin'] = cors_origin
+        r.headers['Cache-Control'] = 'no-store'
+        return r
+    # POST
+    if config_col is None:
+        return jsonify({'error': 'DB unavailable'}), 500
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    data = request.json or {}
+    if not require_password(data):
+        return jsonify({'error': 'Unauthorized'}), 401
+    photo_data = data.get('photo', '').strip()
+    if not photo_data.startswith('data:image/'):
+        return jsonify({'error': 'Invalid image data'}), 400
+    config_col.update_one({'_id': 'dp_photo'}, {'$set': {'data': photo_data}}, upsert=True)
+    r = make_response(jsonify({'status': 'updated'}))
+    r.headers['Access-Control-Allow-Origin'] = cors_origin
+    return r
+
+
 @app.route('/api/dp', methods=['GET', 'POST', 'OPTIONS'])
 def dp():
     origin = request.headers.get('Origin', '')

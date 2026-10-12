@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -676,6 +676,13 @@
         <h2>Profile Picture</h2>
         <div id="dp-status" class="current-value">Checking...</div>
         <button id="dp-toggle-btn" style="margin-top:10px;width:100%;">Toggle</button>
+        <div style="margin-top:16px;border-top:1px solid #333;padding-top:14px;">
+          <label style="display:block;margin-bottom:8px;font-weight:500;">Upload New Photo</label>
+          <img id="dp-preview" src="" alt="" style="display:none;width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid #444;margin-bottom:10px;" />
+          <input type="file" id="dp-file-input" accept="image/*" capture="user" style="display:block;width:100%;margin-bottom:8px;color:#ccc;" />
+          <button id="dp-upload-btn" class="secondary" style="width:100%;">Upload Photo</button>
+          <div id="dp-upload-status" style="margin-top:8px;font-size:13px;"></div>
+        </div>
       </div>
 
       <script>
@@ -723,6 +730,73 @@
           });
 
           loadDpState();
+        })();
+      </script>
+
+<script>
+        (function () {
+          const API = window.location.origin;
+          const fileInput    = document.getElementById('dp-file-input');
+          const preview      = document.getElementById('dp-preview');
+          const uploadBtn    = document.getElementById('dp-upload-btn');
+          const uploadStatus = document.getElementById('dp-upload-status');
+
+          fetch(API + '/api/dp/photo').then(r => r.json()).then(d => {
+            if (d.photo) { preview.src = d.photo; preview.style.display = 'block'; }
+          }).catch(() => {});
+
+          function compressImage(file, maxSize, quality, cb) {
+            const reader = new FileReader();
+            reader.onload = e => {
+              const img = new Image();
+              img.onload = () => {
+                let w = img.width, h = img.height;
+                if (w > maxSize || h > maxSize) {
+                  if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+                  else       { w = Math.round(w * maxSize / h); h = maxSize; }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                cb(canvas.toDataURL('image/jpeg', quality));
+              };
+              img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+          }
+
+          fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            compressImage(file, 600, 0.8, data => {
+              preview.src = data; preview.style.display = 'block';
+            });
+          });
+
+          uploadBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) { uploadStatus.textContent = 'Select a photo first.'; return; }
+            const pwd = document.getElementById('current-password').textContent.trim();
+            if (!pwd || pwd === 'Loading current password...' || pwd === 'Error loading password') {
+              uploadStatus.textContent = 'Password not loaded yet, try again.'; return;
+            }
+            uploadBtn.disabled = true;
+            uploadStatus.textContent = 'Compressing...';
+            compressImage(file, 600, 0.8, async compressed => {
+              uploadStatus.textContent = 'Uploading...';
+              try {
+                const res  = await fetch(API + '/api/dp/photo', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ photo: compressed, password: pwd })
+                });
+                const data = await res.json();
+                if (data.error) uploadStatus.textContent = 'Error: ' + data.error;
+                else { uploadStatus.textContent = [char]0x2713 + ' Photo updated!'; fileInput.value = ''; }
+              } catch (err) { uploadStatus.textContent = 'Upload failed: ' + err.message; }
+              finally { uploadBtn.disabled = false; }
+            });
+          });
         })();
       </script>
 
